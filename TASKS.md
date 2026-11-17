@@ -3,7 +3,7 @@
 | ID | Task | Status |
 |---|---|---|
 | T0 | Audit + tracking docs | DONE |
-| T1 | CMake skeleton, test harness, SHA-256 + hex + byte codec | TODO |
+| T1 | CMake skeleton, test harness, SHA-256 + hex + byte codec | DONE |
 | T2 | Node identity (Ed25519 keygen/save/load/sign/verify, NodeID) | TODO |
 | T3 | WAVE-NP frame format: encode/decode/validate/sign + fuzz target | TODO |
 | T4 | Content-addressed chunk store + signed manifest | TODO |
