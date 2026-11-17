@@ -31,3 +31,9 @@ finalize fails while incomplete and succeeds after completion; final SHA-256 equ
 Checks: multi-term AND search, case-insensitive ASCII, category filter, pagination, private items hidden from
 peer queries, remote-only entries not re-advertised, `%` escaped, SQL-injection string harmless, state never downgrades,
 delete, persistence across reopen.
+
+## T6 — TCP transport + authenticated session (2026-11-17)
+`./build/wavenet_tests` → 21 tests, 0 failed checks; ASan+UBSan build → 21/21.
+Over real loopback TCP sockets: mutual handshake, 1 MiB payload frame, allowlist rejection reported on both sides,
+blocklisted server refused by client, network-ID mismatch refused, byte-identical replayed frame rejected.
+(Loopback TCP only — says nothing about radio links.)
