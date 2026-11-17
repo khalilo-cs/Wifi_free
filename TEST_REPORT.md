@@ -37,3 +37,10 @@ delete, persistence across reopen.
 Over real loopback TCP sockets: mutual handshake, 1 MiB payload frame, allowlist rejection reported on both sides,
 blocklisted server refused by client, network-ID mismatch refused, byte-identical replayed frame rejected.
 (Loopback TCP only — says nothing about radio links.)
+
+## T7 — UDP discovery (2026-11-17)
+`./build/wavenet_tests` → 25 tests, 0 failed checks; ASan+UBSan → 25/25.
+Rules tested: replay, stale, other network, too-old timestamp, self, forged signature, port 0 all rejected; newer accepted
+and address updated; peer table capped at configured size. Real UDP sockets on loopback: unicast seed delivery verified;
+**multicast group delivery on loopback verified in this container** (the test prints a SKIP/NOTE instead of failing where
+multicast is unavailable). Not tested: real Wi-Fi LAN multicast between physical devices.
