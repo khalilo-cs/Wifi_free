@@ -7,7 +7,7 @@
 | T2 | Node identity (Ed25519 keygen/save/load/sign/verify, NodeID) | DONE |
 | T3 | WAVE-NP frame format: encode/decode/validate/sign + fuzz target | DONE |
 | T4 | Content-addressed chunk store + signed manifest | DONE |
-| T5 | SQLite catalog + local search | TODO |
+| T5 | SQLite catalog + local search | DONE |
 | T6 | TCP transport + authenticated session (challenge/response, replay protection) | TODO |
 | T7 | UDP LAN discovery (signed NODE_ANNOUNCE) | TODO |
 | T8 | Chunked download with resume + multi-source scheduler | TODO |

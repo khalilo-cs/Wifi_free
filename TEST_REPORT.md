@@ -25,3 +25,9 @@ signature/message tamper rejection, wrong-key rejection, 0600 persistence, refus
 Checks: content_id == sha256_file; tampered manifest rejected; unsafe file name rejected; chunk-count mismatch rejected;
 corrupted chunk refused; after simulated restart exactly the first half of chunks are recognised as verified;
 finalize fails while incomplete and succeeds after completion; final SHA-256 equals source; empty file supported.
+
+## T5 — SQLite catalog + local search (2026-11-17)
+`./build/wavenet_tests` → 17 tests, 0 failed checks (17/17 under ASan+UBSan).
+Checks: multi-term AND search, case-insensitive ASCII, category filter, pagination, private items hidden from
+peer queries, remote-only entries not re-advertised, `%` escaped, SQL-injection string harmless, state never downgrades,
+delete, persistence across reopen.
