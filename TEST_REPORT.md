@@ -11,3 +11,11 @@ codec rejects truncated input and over-limit blob lengths.
 ## T2 — node identity (2026-11-17)
 `./build/wavenet_tests` → 8 tests, 0 failed checks. Includes RFC 8032 §7.1 TEST 1 verification vector,
 signature/message tamper rejection, wrong-key rejection, 0600 persistence, refusal of world-readable key and garbage key.
+
+## T3 — WAVE-NP framing (2026-11-17)
+- `./build/wavenet_tests` (GCC) → 12 tests, 0 failed checks: roundtrip, rejection of all single-bit flips
+  of a valid frame, session-context binding, size limits, src/signer mismatch.
+- Same tests under clang ASan+UBSan (`build-fuzz/wavenet_tests`) → 12 tests, 0 failed checks.
+- libFuzzer `fuzz_frame`, 60 s, max_len 4096: 1,155,856 executions, no crash/leak/UB reported.
+  Limitation: random inputs cannot produce valid signatures, so post-signature handling is covered by unit tests, not the fuzzer.
+- Environment note: installed `libclang-rt-18-dev` (apt) to get libFuzzer/sanitizer runtimes.
