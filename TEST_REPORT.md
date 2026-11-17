@@ -7,3 +7,7 @@ No code yet. Environment: Linux, g++ 13.3, clang 18.1, CMake 3.28, Ninja, OpenSS
 `cmake --build build && ./build/wavenet_tests` → 4 tests, 0 failed checks.
 SHA-256 checked against FIPS 180-2 vectors ("" and "abc"); streamed file hash == in-memory hash (300 kB);
 codec rejects truncated input and over-limit blob lengths.
+
+## T2 — node identity (2026-11-17)
+`./build/wavenet_tests` → 8 tests, 0 failed checks. Includes RFC 8032 §7.1 TEST 1 verification vector,
+signature/message tamper rejection, wrong-key rejection, 0600 persistence, refusal of world-readable key and garbage key.
