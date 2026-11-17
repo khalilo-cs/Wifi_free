@@ -19,3 +19,9 @@ signature/message tamper rejection, wrong-key rejection, 0600 persistence, refus
 - libFuzzer `fuzz_frame`, 60 s, max_len 4096: 1,155,856 executions, no crash/leak/UB reported.
   Limitation: random inputs cannot produce valid signatures, so post-signature handling is covered by unit tests, not the fuzzer.
 - Environment note: installed `libclang-rt-18-dev` (apt) to get libFuzzer/sanitizer runtimes.
+
+## T4 — manifest + content store (2026-11-17)
+`./build/wavenet_tests` → 16 tests, 0 failed checks (also 16/16 under ASan+UBSan).
+Checks: content_id == sha256_file; tampered manifest rejected; unsafe file name rejected; chunk-count mismatch rejected;
+corrupted chunk refused; after simulated restart exactly the first half of chunks are recognised as verified;
+finalize fails while incomplete and succeeds after completion; final SHA-256 equals source; empty file supported.
