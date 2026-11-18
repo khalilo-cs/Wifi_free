@@ -10,6 +10,6 @@
 | T5 | SQLite catalog + local search | DONE |
 | T6 | TCP transport + authenticated session (challenge/response, replay protection) | DONE |
 | T7 | UDP LAN discovery (signed NODE_ANNOUNCE) | DONE |
-| T8 | Chunked download with resume + multi-source scheduler | TODO |
+| T8 | Chunked download with resume + multi-source scheduler | DONE |
 | T9 | `wavenode` CLI + end-to-end two-process test | TODO |
 | T10 | Android app skeleton | BLOCKED (no SDK) |

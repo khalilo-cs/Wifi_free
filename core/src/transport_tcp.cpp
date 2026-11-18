@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <atomic>
 #include <cerrno>
 #include <cstring>
 #include "wavenet/protocol.hpp"
@@ -38,7 +39,7 @@ class TcpLink final : public Link {
   explicit TcpLink(int fd) : fd_(fd), name_(peer_name(fd)) {
     int one = 1; ::setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
-  ~TcpLink() override { close(); }
+  ~TcpLink() override { close(); ::close(fd_); }
 
   void send_frame(ByteView f) override {
     size_t off = 0;
@@ -63,7 +64,9 @@ class TcpLink final : public Link {
     return buf;
   }
 
-  void close() override { if (fd_ >= 0) { ::shutdown(fd_, SHUT_RDWR); ::close(fd_); fd_ = -1; } }
+  // Thread-safe: only shuts the socket down; the descriptor is released in the destructor so a
+  // concurrent reader never sees a closed/reused fd.
+  void close() override { if (!closed_.exchange(true)) ::shutdown(fd_, SHUT_RDWR); }
   std::string describe() const override { return name_; }
   const char* medium() const override { return "tcp"; }
 
@@ -71,7 +74,7 @@ class TcpLink final : public Link {
   void read_exact(uint8_t* p, size_t n, int timeout_ms) {
     size_t got = 0;
     while (got < n) {
-      if (fd_ < 0) throw TransportError("closed");
+      if (closed_) throw TransportError("closed");
       if (!wait_fd(fd_, POLLIN, timeout_ms)) throw TransportError("recv timeout");
       ssize_t r = ::recv(fd_, p + got, n - got, 0);
       if (r < 0 && (errno == EINTR || errno == EAGAIN)) continue;
@@ -80,7 +83,8 @@ class TcpLink final : public Link {
       got += size_t(r);
     }
   }
-  int fd_;
+  const int fd_;
+  std::atomic<bool> closed_{false};
   std::string name_;
 };
 

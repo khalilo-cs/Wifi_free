@@ -11,3 +11,5 @@
 | D7 | 2026-11-17 | WAVE-NP v1 frames are signed, not encrypted | Avoid custom AEAD design; confidentiality to come from TLS 1.3/QUIC or Noise (see NETWORK_PROTOCOL.md). |
 | D8 | 2026-11-17 | Session binding via signed (untransmitted) receiver nonce | Prevents replay of frames across sessions using only Ed25519. |
 | D9 | 2026-11-17 | Catalog search uses escaped LIKE, not FTS5 | FTS5 not guaranteed in Android's system SQLite; catalogs are small in v0. Revisit with bundled SQLite. |
+| D10 | 2026-11-18 | Drop a peer after one bad chunk (per download) | Hash mismatch is unambiguous evidence of a faulty/malicious peer; cheap defence against pollution. |
+| D11 | 2026-11-18 | `Link::close()` = shutdown only; fd freed in destructor | Fixes TSan-detected race; avoids fd reuse by concurrent reader. |

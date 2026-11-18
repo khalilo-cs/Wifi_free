@@ -44,3 +44,14 @@ Rules tested: replay, stale, other network, too-old timestamp, self, forged sign
 and address updated; peer table capped at configured size. Real UDP sockets on loopback: unicast seed delivery verified;
 **multicast group delivery on loopback verified in this container** (the test prints a SKIP/NOTE instead of failing where
 multicast is unavailable). Not tested: real Wi-Fi LAN multicast between physical devices.
+
+## T8 — node server, multi-source download, resume (2026-11-18)
+Multi-node tests in one process over real loopback TCP (each node: own identity, SQLite catalog, store dir):
+- publish → remote search (private item hidden) → download → SHA-256 equal to source; re-download fetches 0 chunks.
+- interrupt after 10 chunks → new Catalog/Store objects (restart) → resume: already_had = 10, fetched = total − 10, hash OK.
+- multi-source A + replica C: both delivered chunks, sum = chunk count.
+- source A stopped mid-download → incomplete, then resume from {A(down), C} completes, hash OK.
+- malicious authenticated peer corrupting chunks + honest peer → completes, rejected ≥ 1, hash OK.
+- no-redistribution content not re-served by replica; allowlist node refuses unknown peer ("not trusted"), accepts after allow.
+Results: GCC 30/30; ASan+UBSan 30/30; **TSan initially reported a data race in `TcpLink::close()`** (fd written during
+concurrent recv) → fixed (atomic flag + shutdown; fd closed in destructor) → TSan clean in 3 consecutive runs, 30/30.
