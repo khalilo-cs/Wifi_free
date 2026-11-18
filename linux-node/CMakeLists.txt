@@ -1,0 +1,4 @@
+add_executable(wavenode main.cpp)
+target_link_libraries(wavenode PRIVATE wavenet_core)
+add_test(NAME e2e_two_node COMMAND bash ${CMAKE_SOURCE_DIR}/tests/e2e/two_node.sh $<TARGET_FILE:wavenode>)
+set_tests_properties(e2e_two_node PROPERTIES TIMEOUT 120)

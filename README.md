@@ -1,1 +1,43 @@
-# Wifi_free
+# WAVE-NET ∞ — experimental distributed content network
+
+**Status: v0.1 vertical slice (Linux, TCP/UDP only).** Devices voluntarily publish, discover, search and download
+content from each other, with signed identities and end-to-end integrity verification.
+Radio transports (BLE, Wi-Fi Direct/Aware) and the Android app are **not implemented yet**.
+Reaching the global Internet always requires a real gateway; nothing here replaces one.
+
+## What works today (tested — see TEST_REPORT.md)
+- Ed25519 node identity (`NodeID = SHA-256(pubkey)`), key file 0600.
+- WAVE-NP v1 signed frames (experimental project protocol), fuzzed.
+- Mutually authenticated sessions, replay protection, allowlist/blocklist trust.
+- LAN discovery via signed UDP multicast announces (+ unicast seeds).
+- Publishing with metadata, signed manifests, SQLite catalog, local + remote search (private items never exposed).
+- Chunked, multi-source, resumable downloads; per-chunk and whole-file SHA-256 verification; corrupt peers dropped.
+
+## Build & test (Ubuntu 24.04: g++ ≥ 13, cmake, ninja, libssl-dev, libsqlite3-dev)
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+ctest --test-dir build --output-on-failure      # unit tests + 2-process end-to-end test
+```
+Sanitizers: `-DWAVENET_SANITIZE=ON` (ASan+UBSan). Fuzzing (clang + libclang-rt-18-dev):
+`CC=clang CXX=clang++ cmake -S . -B build-fuzz -DWAVENET_FUZZ=ON -DWAVENET_SANITIZE=ON -DCMAKE_CXX_FLAGS=-fsanitize=fuzzer-no-link && cmake --build build-fuzz && build-fuzz/tests/fuzz/fuzz_frame -max_total_time=60`
+
+## Try it (two terminals, same LAN or same machine)
+```bash
+W=build/linux-node/wavenode
+# terminal 1 — publisher
+$W --data /tmp/nodeA publish ./book.pdf --title "Physics Book" --category books --keywords "science"
+$W --data /tmp/nodeA serve --name node-a          # add --multicast-if 127.0.0.1 for single-machine tests
+# terminal 2 — downloader
+$W --data /tmp/nodeE peers
+$W --data /tmp/nodeE search-net physics
+$W --data /tmp/nodeE fetch <CONTENT_ID> --out ./book.pdf   # Ctrl-C / rerun resumes
+```
+Ports: TCP 47801 (content), UDP 47800 multicast 239.255.77.86 (discovery). Firewalls must allow them.
+
+## Security notes
+Traffic is **authenticated but not encrypted** in v0.1. Do not share private data over untrusted networks yet.
+See `docs/security/` and `docs/protocol/NETWORK_PROTOCOL.md`.
+
+## Project tracking
+`MASTER_PLAN.md` · `TASKS.md` · `DECISIONS_LOG.md` · `TEST_REPORT.md` · `CLAUDE.md` · `docs/`

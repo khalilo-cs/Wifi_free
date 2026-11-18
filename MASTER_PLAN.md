@@ -13,10 +13,10 @@ then add radio transports (Android) behind the same `Transport` abstraction.
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Repository audit, tracking docs | done |
-| 1 | Foundation: hashing, identity, WAVE-NP framing, storage, tests | in progress |
-| 2 | First network: discovery, connections, announcements | planned |
-| 3 | Data transfer: chunks, resume, integrity, multi-source | planned |
-| 4 | WAVE Store: publisher, metadata, search | planned |
+| 1 | Foundation: hashing, identity, WAVE-NP framing, storage, tests | done |
+| 2 | First network: discovery, connections, announcements | done (LAN, single hop); multi-hop planned |
+| 3 | Data transfer: chunks, resume, integrity, multi-source | done (v0); pipelining/benchmarks planned |
+| 4 | WAVE Store: publisher, metadata, search | CLI only; UI/app-market planned |
 | 5 | Android app (blocked: no Android SDK in current environment) | blocked |
 | 6–10 | Services, security hardening, gateways, hardware, release | planned |
 

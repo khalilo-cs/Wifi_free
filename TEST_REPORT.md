@@ -55,3 +55,15 @@ Multi-node tests in one process over real loopback TCP (each node: own identity,
 - no-redistribution content not re-served by replica; allowlist node refuses unknown peer ("not trusted"), accepts after allow.
 Results: GCC 30/30; ASan+UBSan 30/30; **TSan initially reported a data race in `TcpLink::close()`** (fd written during
 concurrent recv) → fixed (atomic flag + shutdown; fd closed in destructor) → TSan clean in 3 consecutive runs, 30/30.
+
+## T9 — `wavenode` CLI + end-to-end (2026-11-18)
+`ctest --test-dir build --output-on-failure` → 2/2 passed (unit 30/30; e2e_two_node).
+e2e (separate OS processes, loopback TCP + UDP multicast on 127.0.0.1): node key 0600; content id == `sha256sum`;
+local search; discovery of A by E; remote search; fetch stopped after 7 chunks (rc=3); rerun resumed with
+`already_had=7 fetched=26`; output byte-identical (`cmp`) and SHA-256 equal; allowlist node refused unknown node
+("not trusted") then served it after `trust allow`.
+Observed timings in one run (single host loopback, includes connect+handshake; **not a benchmark, not radio**):
+8 MiB file, 33 chunks — first 7 chunks 0.044 s; remaining 26 chunks (6.3 MiB) 0.115 s.
+
+## Secrets check
+`git ls-files | xargs grep -lE "BEGIN (PRIVATE|EC|RSA)"` → no matches; keys are created only in node data dirs outside the repo.
