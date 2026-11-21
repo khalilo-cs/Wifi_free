@@ -67,3 +67,18 @@ Observed timings in one run (single host loopback, includes connect+handshake; *
 
 ## Secrets check
 `git ls-files | xargs grep -lE "BEGIN (PRIVATE|EC|RSA)"` → no matches; keys are created only in node data dirs outside the repo.
+
+## T10 — WAVE-5 scenario (2026-11-21)
+`ctest --test-dir build --output-on-failure` → 3/3 passed (unit, e2e_two_node, e2e_wave5). `tests/e2e/wave5.sh` also passed 3/3 consecutive runs.
+5 separate processes on one host (loopback TCP + UDP multicast on 127.0.0.1), 16 MiB file, 65 chunks:
+- E discovered A, B, C, D; remote search returned the item from 3 sources (A, C, D).
+- C (cache) and D (backup) replicated from A; hashes verified.
+- E stopped after ≥20 chunks (22 in the recorded run: chunks already in flight from 3 sources still complete), then A was killed.
+- E resumed from C + D only: already_had=22, fetched=43 (21 from D, 22 from C), SHA-256 == source.
+- D in allowlist mode refused an unknown node ("not trusted").
+- No external Internet used (all data local).
+Measured in one run (single host, loopback, **not radio, not a benchmark**): replication 16 MiB in ~0.30 s; client peak RSS
+≈ 11–13 MiB, CPU ≈ 0.06–0.13 s per fetch (getrusage).
+Not covered: B as a relay (multi-hop not implemented, T15), real radio, energy consumption, service (code) failover.
+**Test-design bug found:** the first version assumed exactly 20 chunks before stopping; with several sources a few more complete.
+Behaviour is correct (extra chunks are verified and kept); the test now checks resume == chunks actually fetched.

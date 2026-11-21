@@ -1,4 +1,5 @@
 // wavenode — WAVE-NET ∞ Linux node CLI (experimental).
+#include <sys/resource.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -227,6 +228,11 @@ int main(int argc, char** argv) {
       std::fprintf(stderr, "chunks: total=%u already_had=%u fetched=%u rejected=%u  bytes=%s  time=%.3fs  (%.1f MiB/s measured)\n",
                    st.total_chunks, st.already_had, st.fetched, st.rejected, human(st.bytes_fetched).c_str(), st.seconds, mbps);
       for (auto& [peer, n] : st.per_peer) std::fprintf(stderr, "  source %s: %u chunks\n", peer.c_str(), n);
+      rusage ru{};
+      if (::getrusage(RUSAGE_SELF, &ru) == 0) {
+        double cpu = double(ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) + double(ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1e6;
+        std::fprintf(stderr, "resources: peak_rss=%ld KiB  cpu=%.3fs\n", ru.ru_maxrss, cpu);
+      }
       if (!st.complete) { std::fprintf(stderr, "INCOMPLETE: %s (run again to resume)\n", st.error.c_str()); return 3; }
       std::printf("verified %s\n", hex(cid).c_str());
       if (a.has("--out")) { store.export_to(cid, a.get("--out")); std::fprintf(stderr, "saved to %s\n", a.get("--out").c_str()); }
