@@ -43,3 +43,15 @@ cd android && gradle :app:test :app:apk     # → app/build/outputs/wavenet-0.1.
 ```
 Requires: `apt install android-sdk-platform-23 android-sdk-build-tools apksigner dalvik-exchange zip`, JDK 17+, Gradle 8.
 The debug key is generated in `app/build/` and never committed.
+
+## Radio transports (T18) — implemented, not field-tested
+| Medium | Discovery | Data path | Code |
+|---|---|---|---|
+| Wi-Fi LAN / hotspot | signed UDP multicast announces | TCP + TLS 1.3 | `Discovery`, `PeerAddr` |
+| Wi-Fi Direct | DNS-SD service `_wavenet._tcp` (TXT: node-id prefix, port) | P2P group is IP → same TCP + TLS; group owner learns client address via `NodeServer.onPeer` | `WifiDirectTransport` |
+| Bluetooth Classic | paired devices + inquiry + SDP for the WAVE RFCOMM UUID (byte-order quirk handled) | insecure RFCOMM stream → `ByteChannel` (watchdog timeouts) → TLS 1.3 | `BtTransport`, `BtRoute` |
+| BLE | beacon: 128-bit service UUID + scan-response service data (node-id prefix, flags) | none (discovery hint only) | `BleBeacon` |
+Hybrid: `WaveNode.routes()` merges all media; `Downloader` pulls chunks from all routes at once and records `perMedium`.
+Evidence available without phones: `TransportTest` (full protocol over a non-IP in-memory stream with watchdog timeouts; hybrid
+TCP+stream download; emulated slow medium), `RadioCodecTest`. Radio API behaviour (permissions, invitations, SDP, multicast on
+real Wi-Fi) is unverified until a field test (T19).

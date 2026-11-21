@@ -50,5 +50,6 @@ See `docs/security/` and `docs/protocol/NETWORK_PROTOCOL.md`.
 `cd android && gradle :app:test :app:apk` builds a signed debug APK (see `docs/architecture/ANDROID_ARCHITECTURE.md` for the
 toolchain without Google's SDK servers). Version 0.2 publishes, discovers, searches,
 downloads (multi-source, resumable) and serves content over Wi-Fi with the same TLS 1.3 + signed-content protocol as the Linux
-node (interop-tested on the JVM against `wavenode`). Bluetooth / Wi-Fi Direct transfer is not implemented. It has **not yet
+node (interop-tested on the JVM against `wavenode`). Version 0.3 adds Wi-Fi Direct and Bluetooth Classic transfers, a BLE discovery beacon and hybrid
+multi-medium downloads (implemented; protocol path tested on the JVM; radios **not field-tested**). It has **not yet
 been run on a real phone** — see `docs/ANDROID_USER_GUIDE_AR.md` for a two-phone test.

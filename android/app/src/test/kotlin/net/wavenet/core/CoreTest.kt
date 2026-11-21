@@ -12,7 +12,7 @@ class CapabilityTest {
         val st = CapabilityDetector.detect(setOf("android.hardware.wifi", "android.hardware.wifi.direct"), 34, { true }, { true })
         val m = st.associateBy { it.kind }
         assertEquals(RadioState.READY, m[RadioKind.WIFI_LAN]!!.state)
-        assertEquals(RadioState.PLANNED, m[RadioKind.WIFI_DIRECT]!!.state)
+        assertEquals(RadioState.READY, m[RadioKind.WIFI_DIRECT]!!.state)
         assertEquals(RadioState.UNSUPPORTED, m[RadioKind.WIFI_AWARE]!!.state)
         assertEquals(RadioState.UNSUPPORTED, m[RadioKind.BLE]!!.state)
     }
@@ -20,10 +20,10 @@ class CapabilityTest {
     @Test fun permissionsDependOnAndroidVersion() {
         assertEquals(listOf(Permissions.FINE_LOCATION), Permissions.forDiscovery(RadioKind.BLE, 30))
         // With neverForLocation declared (modern SDK): no location on 31+/33+
-        assertEquals(listOf(Permissions.BLUETOOTH_SCAN, Permissions.BLUETOOTH_CONNECT), Permissions.forDiscovery(RadioKind.BLE, 31, true))
+        assertEquals(listOf(Permissions.BLUETOOTH_SCAN, Permissions.BLUETOOTH_CONNECT, Permissions.BLUETOOTH_ADVERTISE), Permissions.forDiscovery(RadioKind.BLE, 31, true))
         assertEquals(listOf(Permissions.NEARBY_WIFI), Permissions.forDiscovery(RadioKind.WIFI_DIRECT, 33, true))
         // Current build (flag cannot be declared, D18): location is required too
-        assertEquals(listOf(Permissions.BLUETOOTH_SCAN, Permissions.BLUETOOTH_CONNECT, Permissions.FINE_LOCATION), Permissions.forDiscovery(RadioKind.BLE, 31))
+        assertEquals(listOf(Permissions.BLUETOOTH_SCAN, Permissions.BLUETOOTH_CONNECT, Permissions.BLUETOOTH_ADVERTISE, Permissions.FINE_LOCATION), Permissions.forDiscovery(RadioKind.BLE, 31))
         assertEquals(listOf(Permissions.NEARBY_WIFI, Permissions.FINE_LOCATION), Permissions.forDiscovery(RadioKind.WIFI_DIRECT, 33))
         assertEquals(listOf(Permissions.FINE_LOCATION), Permissions.forDiscovery(RadioKind.WIFI_DIRECT, 32))
         assertTrue(Permissions.forDiscovery(RadioKind.WIFI_LAN, 34).isEmpty())
@@ -44,7 +44,8 @@ class CapabilityTest {
 
     @Test fun bulkOrderOnlyUsesReadyMedia() {
         val st = CapabilityDetector.detect(allFeatures, 34, { true }, { true })
-        assertEquals(listOf(RadioKind.WIFI_LAN), CapabilityDetector.bulkTransferOrder(st))  // others not implemented yet
+        assertEquals(listOf(RadioKind.WIFI_LAN, RadioKind.WIFI_DIRECT, RadioKind.BT_CLASSIC), CapabilityDetector.bulkTransferOrder(st))  // Aware not implemented; BLE discovery-only
+        assertEquals(RadioState.DISCOVERY_ONLY, st.first { it.kind == RadioKind.BLE }.state)
         val off = CapabilityDetector.detect(allFeatures, 34, { true }, { false })
         assertTrue(CapabilityDetector.bulkTransferOrder(off).isEmpty())
     }

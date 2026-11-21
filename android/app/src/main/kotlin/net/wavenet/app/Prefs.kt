@@ -11,6 +11,11 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("welcomed", false)
         set(v) { sp.edit().putBoolean("welcomed", v).apply() }
 
+    /** User enabled Bluetooth / Wi-Fi Direct (permissions granted). */
+    var radios: Boolean
+        get() = sp.getBoolean("radios", false)
+        set(v) { sp.edit().putBoolean("radios", v).apply() }
+
     /** "" = follow system, otherwise "ar" or "en". */
     var language: String
         get() = sp.getString("language", "") ?: ""

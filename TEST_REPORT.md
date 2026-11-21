@@ -161,3 +161,16 @@ Bugs found and fixed: (1) `MulticastSocket.apply { port }` resolved to the socke
 (2) kotlin-stdlib invokedynamic would crash on ART if reached → build guard (D21).
 **Not tested:** execution on ART / a real phone (no device; Debian ships libart without dalvikvm or boot classpath),
 Keystore path, UI, real Wi-Fi multicast between phones.
+
+## T18 — Bluetooth / Wi-Fi Direct / BLE + hybrid transport (2026-11-21)
+`cd android && gradle :app:test :app:apk` → 33 JVM tests, 0 failures, 0 skipped (adds TransportTest 4, RadioCodecTest 5).
+- Full WAVE-NP + TLS 1.3 download over an in-memory stream with **no IP and no native read timeout** (stand-in for RFCOMM):
+  all chunks via that medium, bytes identical.
+- Hybrid: one download from a TCP route + a stream route — both media delivered chunks, sum = chunk count.
+- Emulated slow medium (100 kB/s) next to TCP: split tcp=60, slow=2 chunks, 0.36 s (emulation, not a radio measurement).
+- Watchdog closes a silent stream after its timeout (300 ms requested).
+- Interop tests vs C++ still pass after the transport refactor.
+- RadioCodec: DNS-SD TXT and BLE payload round-trip/garbage rejection, 31-byte BLE limit, reversed-UUID quirk, medium ranking.
+APK 0.3.0 (3,273,205 bytes): versionCode 3, BLUETOOTH_ADVERTISE declared, apksigner v2/v3 OK, zipalign OK, contains BtTransport,
+BtRoute, BleBeacon, WifiDirectTransport; invoke-custom only in the 3 reviewed stdlib classes.
+**Not tested:** any real Bluetooth / Wi-Fi Direct / BLE radio behaviour (permissions dialogs, P2P invitations, SDP, throughput).

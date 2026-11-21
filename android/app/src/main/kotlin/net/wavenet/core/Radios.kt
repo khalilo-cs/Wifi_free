@@ -3,13 +3,13 @@ package net.wavenet.core
 /** Connection media WAVE-NET knows about. `waveTransport` = whether WAVE data transfer over it is implemented. */
 enum class RadioKind(val feature: String?, val minSdk: Int, val waveTransport: Boolean) {
     WIFI_LAN("android.hardware.wifi", 1, true),         // same protocol as the Linux node (TCP + TLS)
-    WIFI_DIRECT("android.hardware.wifi.direct", 14, false),
+    WIFI_DIRECT("android.hardware.wifi.direct", 14, true),  // IP link once the P2P group is formed
     WIFI_AWARE("android.hardware.wifi.aware", 26, false),
-    BLE("android.hardware.bluetooth_le", 18, false),
-    BT_CLASSIC("android.hardware.bluetooth", 1, false),
+    BLE("android.hardware.bluetooth_le", 18, false),        // discovery beacon only (too slow for files)
+    BT_CLASSIC("android.hardware.bluetooth", 1, true),     // RFCOMM byte stream
 }
 
-enum class RadioState { UNSUPPORTED, NEEDS_PERMISSION, OFF, READY, PLANNED }
+enum class RadioState { UNSUPPORTED, NEEDS_PERMISSION, OFF, READY, DISCOVERY_ONLY, PLANNED }
 
 data class RadioStatus(val kind: RadioKind, val state: RadioState, val missingPermissions: List<String>)
 
@@ -18,6 +18,7 @@ object Permissions {
     const val BLUETOOTH_SCAN = "android.permission.BLUETOOTH_SCAN"            // API 31+
     const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"      // API 31+
     const val NEARBY_WIFI = "android.permission.NEARBY_WIFI_DEVICES"          // API 33+
+    const val BLUETOOTH_ADVERTISE = "android.permission.BLUETOOTH_ADVERTISE"  // API 31+ (BLE beacon, discoverable)
 
     /**
      * True when the manifest can assert `neverForLocation` (needs an API 31+ build SDK). The current build uses the
@@ -31,7 +32,7 @@ object Permissions {
         return when (kind) {
             RadioKind.WIFI_LAN -> emptyList()  // INTERNET / multicast are install-time permissions
             RadioKind.BLE, RadioKind.BT_CLASSIC ->
-                if (sdk >= 31) listOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT) + loc else listOf(FINE_LOCATION)
+                if (sdk >= 31) listOf(BLUETOOTH_SCAN, BLUETOOTH_CONNECT, BLUETOOTH_ADVERTISE) + loc else listOf(FINE_LOCATION)
             RadioKind.WIFI_DIRECT, RadioKind.WIFI_AWARE ->
                 if (sdk >= 33) listOf(NEARBY_WIFI) + loc else listOf(FINE_LOCATION)
         }
@@ -53,6 +54,7 @@ object CapabilityDetector {
             !supported -> RadioState.UNSUPPORTED
             missing.isNotEmpty() -> RadioState.NEEDS_PERMISSION
             enabled(k) == false -> RadioState.OFF
+            k == RadioKind.BLE -> RadioState.DISCOVERY_ONLY
             !k.waveTransport -> RadioState.PLANNED
             else -> RadioState.READY
         }
@@ -61,7 +63,7 @@ object CapabilityDetector {
 
     /** Order in which media should be tried for bulk transfer (fastest first). Only media that are READY. */
     fun bulkTransferOrder(statuses: List<RadioStatus>): List<RadioKind> {
-        val rank = listOf(RadioKind.WIFI_LAN, RadioKind.WIFI_DIRECT, RadioKind.WIFI_AWARE, RadioKind.BT_CLASSIC, RadioKind.BLE)
+        val rank = listOf(RadioKind.WIFI_LAN, RadioKind.WIFI_DIRECT, RadioKind.WIFI_AWARE, RadioKind.BT_CLASSIC)
         return rank.filter { k -> statuses.any { it.kind == k && it.state == RadioState.READY } }
     }
 }

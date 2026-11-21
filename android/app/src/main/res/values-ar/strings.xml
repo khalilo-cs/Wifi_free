@@ -28,12 +28,34 @@
     <string name="status_needs_permission" formatted="false">يحتاج إذناً</string>
     <string name="status_off" formatted="false">مغلق</string>
     <string name="status_ready" formatted="false">جاهز — يُستخدم للنقل</string>
+    <string name="status_discovery_only" formatted="false">يُستخدم لاكتشاف أجهزة WAVE القريبة (أبطأ من نقل الملفات)</string>
     <string name="status_planned" formatted="false">متوفر في الجهاز؛ النقل عبره غير مدعوم بعد</string>
-    <string name="nearby_scan" formatted="false">افحص أجهزة البلوتوث وWi-Fi Direct</string>
+    <string name="nearby_scan" formatted="false">اعرض كل أجهزة الراديو القريبة</string>
     <string name="nearby_scanning" formatted="false">جارٍ الفحص…</string>
     <string name="nearby_none" formatted="false">لم يُعثر على أجهزة</string>
-    <string name="nearby_note" formatted="false">هذا يعرض الأجهزة القريبة فقط؛ نقل الملفات يتم عبر الواي فاي.</string>
+    <string name="nearby_note" formatted="false">هذه قائمة تشخيصية بكل أجهزة الراديو القريبة (WAVE وغيرها).</string>
     <string name="permission_denied" formatted="false">تم رفض الإذن. يمكنك السماح به لاحقاً من إعدادات النظام.</string>
+    <string name="radios_title" formatted="false">البلوتوث وWi-Fi Direct (بدون راوتر)</string>
+    <string name="radios_enable" formatted="false">تفعيل البلوتوث وWi-Fi Direct</string>
+    <string name="radios_disable" formatted="false">إيقاف الراديو</string>
+    <string name="radios_off_note" formatted="false">متوقف. فعّله للمشاركة مع الهواتف القريبة بدون أي شبكة واي فاي.</string>
+    <string name="bt_server_on" formatted="false">البلوتوث: يستقبل اتصالات WAVE</string>
+    <string name="bt_server_off" formatted="false">البلوتوث: لا يشارك (المشاركة أو البلوتوث متوقف)</string>
+    <string name="bt_turn_on" formatted="false">شغّل البلوتوث</string>
+    <string name="bt_peers" formatted="false">هواتف WAVE عبر البلوتوث</string>
+    <string name="bt_visible" formatted="false">اجعل هاتفي مرئياً عبر البلوتوث (٥ دقائق)</string>
+    <string name="radios_rescan" formatted="false">ابحث بالقرب مرة أخرى</string>
+    <string name="ble_nearby" formatted="false">إشارات WAVE القريبة (BLE)</string>
+    <string name="wd_title" formatted="false">هواتف WAVE عبر Wi-Fi Direct</string>
+    <string name="wd_none" formatted="false">لا يوجد بعد. يجب أن يفعّل الهاتف الآخر الراديو والمشاركة.</string>
+    <string name="wd_connect" formatted="false">اتصال</string>
+    <string name="wd_connected" formatted="false">مجموعة Wi-Fi Direct نشطة</string>
+    <string name="wd_disconnect" formatted="false">قطع الاتصال</string>
+    <string name="wd_note" formatted="false">سيُطلب من الهاتف الآخر قبول الاتصال.</string>
+    <string name="medium_tcp" formatted="false">واي فاي</string>
+    <string name="medium_wifi_direct" formatted="false">Wi-Fi Direct</string>
+    <string name="medium_bluetooth" formatted="false">بلوتوث</string>
+    <string name="via" formatted="false">عبر</string>
     <string name="store_search_hint" formatted="false">ابحث عن كتب، تطبيقات، فيديوهات…</string>
     <string name="store_search" formatted="false">بحث</string>
     <string name="store_devices" formatted="false">أجهزة WAVE على هذه الشبكة</string>
@@ -98,7 +120,7 @@
     <string name="settings_language" formatted="false">اللغة</string>
     <string name="settings_lang_system" formatted="false">لغة النظام</string>
     <string name="settings_about" formatted="false">حول التطبيق</string>
-    <string name="settings_about_body" formatted="false">WAVE-NET 0.2 — النقل عبر الواي فاي (نفس الشبكة أو نقطة اتصال) بتشفير TLS 1.3 ومحتوى موقّع وتحقق SHA-256. النقل عبر البلوتوث وWi-Fi Direct غير مدعوم بعد.</string>
+    <string name="settings_about_body" formatted="false">WAVE-NET 0.3 — النقل عبر الواي فاي (نفس الشبكة أو نقطة اتصال) بتشفير TLS 1.3 ومحتوى موقّع وتحقق SHA-256. النقل عبر البلوتوث وWi-Fi Direct منفّذ لكنه لم يُجرَّب ميدانياً بعد؛ ويُستخدم BLE للاكتشاف فقط.</string>
     <string name="decision_allowed" formatted="false">المشاركة مسموحة</string>
     <string name="decision_disabled" formatted="false">المشاركة متوقفة بقرارك</string>
     <string name="decision_low_battery" formatted="false">متوقفة: البطارية أقل من الحد الذي وضعته</string>

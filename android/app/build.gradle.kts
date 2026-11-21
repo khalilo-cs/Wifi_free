@@ -10,7 +10,7 @@ val sdkDir = providers.environmentVariable("WAVENET_ANDROID_SDK").getOrElse("/us
 val androidJar = file("$sdkDir/platforms/android-23/android.jar")
 val minSdk = 26      // dx needs API 26 for any invokedynamic; covers Android 8.0+
 val targetSdk = 34
-val versionName = "0.2.0"
+val versionName = "0.3.0"
 val gen = layout.buildDirectory.dir("wave")
 
 dependencies {
@@ -57,7 +57,7 @@ val aaptLink by tasks.registering {
   doLast {
     val g = gen.get().asFile
     run("aapt2", "link", "-I", androidJar.path, "--manifest", file("src/main/AndroidManifest.xml").path,
-        "--min-sdk-version", "$minSdk", "--target-sdk-version", "$targetSdk", "--version-code", "2",
+        "--min-sdk-version", "$minSdk", "--target-sdk-version", "$targetSdk", "--version-code", "3",
         "--version-name", versionName, "--java", File(g, "rjava").path, "--auto-add-overlay",
         "-o", File(g, "base.apk").path, File(g, "res.zip").path)
   }

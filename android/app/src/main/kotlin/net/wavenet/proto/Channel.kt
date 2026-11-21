@@ -44,6 +44,12 @@ private fun readExact(inp: InputStream, buf: ByteArray, off: Int, n: Int) {
     }
 }
 
+/** Shared timer for media whose blocking calls have no timeout (e.g. Bluetooth connect): run `action` after `ms`. */
+object Watchdog {
+    private val ex = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "wave-timer").apply { isDaemon = true } }
+    fun after(ms: Long, action: () -> Unit): ScheduledFuture<*> = ex.schedule({ try { action() } catch (e: Exception) { } }, ms, TimeUnit.MILLISECONDS)
+}
+
 /** Frame reader/writer over a channel (optionally through TLS streams). Same size checks as the C++ links. */
 class StreamLink(private val ch: ByteChannel, private val inp: InputStream, private val out: OutputStream,
                  override val describe: String, override val channelBinding: ByteArray = ByteArray(0)) : Link {

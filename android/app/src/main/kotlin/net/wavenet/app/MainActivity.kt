@@ -34,6 +34,7 @@ import net.wavenet.core.RadioState
 import net.wavenet.proto.Hex
 import net.wavenet.proto.LocalState
 import net.wavenet.proto.PeerAddr
+import net.wavenet.proto.PeerRoute
 import net.wavenet.proto.Wire
 
 /** Single-activity UI built in code (AndroidX is not available in the build environment). */
@@ -47,6 +48,7 @@ class MainActivity : Activity() {
     private var peersBox: LinearLayout? = null
     private var jobsBox: LinearLayout? = null
     private var statusBox: LinearLayout? = null
+    private var radiosBox: LinearLayout? = null
     private var pickedUri: Uri? = null
     private var pickedName = ""
     private var pickedMime = ""
@@ -135,9 +137,24 @@ class MainActivity : Activity() {
     }
 
     private fun render() {
-        content.removeAllViews(); peersBox = null; jobsBox = null; statusBox = null
+        content.removeAllViews(); peersBox = null; jobsBox = null; statusBox = null; radiosBox = null
         when (tab) { 0 -> home(); 1 -> store(); 2 -> publish(); 3 -> library(); else -> settings() }
         refreshLive()
+    }
+
+    private fun mediumName(m: String) = s(when (m) { "wifi-direct" -> R.string.medium_wifi_direct; "bluetooth" -> R.string.medium_bluetooth; else -> R.string.medium_tcp })
+
+    private fun requestRadios() {
+        val needed = DeviceProbe.radios(this).filter { it.kind == RadioKind.BT_CLASSIC || it.kind == RadioKind.BLE || it.kind == RadioKind.WIFI_DIRECT }
+            .flatMap { it.missingPermissions }.distinct()
+        if (needed.isNotEmpty()) { requestPermissions(needed.toTypedArray(), REQ_RADIOS); return }
+        enableRadios()
+    }
+
+    private fun enableRadios() {
+        if (WaveNode.bt?.enabled == false) try { startActivity(Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE)) } catch (e: Exception) { }
+        bg { WaveNode.startRadios() }
+        ui.postDelayed({ if (tab == 0) render() }, 500)
     }
 
     private fun decisionText(d: Decision) = s(when (d) {
@@ -154,6 +171,8 @@ class MainActivity : Activity() {
         content.addView(sw)
         statusBox = vbox().also { content.addView(it) }
         content.addView(text(s(R.string.keep_open), 13f, color = getColor(R.color.wave_warn)))
+        content.addView(header(s(R.string.radios_title)))
+        radiosBox = vbox().also { content.addView(it) }
         content.addView(header(s(R.string.node_id)))
         content.addView(text(WaveNode.ctx.id.nodeIdHex.chunked(16).joinToString(" "), 12f).apply { typeface = Typeface.MONOSPACE })
         content.addView(header(s(R.string.section_radios)))
@@ -161,7 +180,7 @@ class MainActivity : Activity() {
             val name = s(when (r.kind) { RadioKind.WIFI_LAN -> R.string.radio_wifi_lan; RadioKind.WIFI_DIRECT -> R.string.radio_wifi_direct
                 RadioKind.WIFI_AWARE -> R.string.radio_wifi_aware; RadioKind.BLE -> R.string.radio_ble; RadioKind.BT_CLASSIC -> R.string.radio_bt_classic })
             val st = s(when (r.state) { RadioState.UNSUPPORTED -> R.string.status_unsupported; RadioState.NEEDS_PERMISSION -> R.string.status_needs_permission
-                RadioState.OFF -> R.string.status_off; RadioState.READY -> R.string.status_ready; RadioState.PLANNED -> R.string.status_planned })
+                RadioState.OFF -> R.string.status_off; RadioState.READY -> R.string.status_ready; RadioState.DISCOVERY_ONLY -> R.string.status_discovery_only; RadioState.PLANNED -> R.string.status_planned })
             val color = getColor(when (r.state) { RadioState.READY -> R.color.wave_ok; RadioState.UNSUPPORTED -> R.color.wave_off; else -> R.color.wave_warn })
             content.addView(text("$name — $st", 14f, color = color))
         }
@@ -220,12 +239,12 @@ class MainActivity : Activity() {
             val card = vbox().apply { setPadding(0, dp(8), 0, dp(8)) }
             card.addView(text(m.title, 16f, true))
             if (m.description.isNotEmpty()) card.addView(text(m.description, 13f))
-            card.addView(text(listOf(m.category, m.fileName, human(m.size), s(R.string.from_devices) + " " + h.peers.size + " " + s(R.string.devices_word))
-                .filter { it.isNotEmpty() }.joinToString(" · "), 12f))
+            card.addView(text(listOf(m.category, m.fileName, human(m.size), s(R.string.from_devices) + " " + h.routes.size + " " + s(R.string.devices_word) +
+                " (" + h.routes.map { mediumName(it.medium) }.distinct().joinToString(", ") + ")").filter { it.isNotEmpty() }.joinToString(" · "), 12f))
             val local = WaveNode.ctx.store.get(m.contentId)
             if (local != null && local.state != LocalState.REMOTE && WaveNode.ctx.store.hasComplete(m.contentId))
                 card.addView(text("✓ " + s(R.string.lib_downloaded), 13f, color = getColor(R.color.wave_ok)))
-            else card.addView(button(s(R.string.download)) { WaveNode.startDownload(m, h.peers); refreshLive() })
+            else card.addView(button(s(R.string.download)) { WaveNode.startDownload(m, h.routes); refreshLive() })
             box.addView(card)
         }
     }
@@ -323,6 +342,41 @@ class MainActivity : Activity() {
 
     // ---------- live refresh ----------
     private fun refreshLive() {
+        radiosBox?.let { b ->
+            b.removeAllViews()
+            if (!WaveNode.radiosOn) {
+                b.addView(text(s(R.string.radios_off_note), 13f))
+                b.addView(button(s(R.string.radios_enable)) { requestRadios() })
+                return@let
+            }
+            val bt = WaveNode.bt
+            if (bt != null && !bt.enabled) b.addView(button(s(R.string.bt_turn_on)) { enableRadios() })
+            b.addView(text(s(if (bt?.serverRunning == true) R.string.bt_server_on else R.string.bt_server_off), 13f,
+                color = getColor(if (bt?.serverRunning == true) R.color.wave_ok else R.color.wave_warn)))
+            b.addView(text(s(R.string.bt_peers) + ": " + (bt?.peers?.values?.joinToString(", ") { it.label }?.ifEmpty { "—" } ?: "—"), 13f))
+            b.addView(text(s(R.string.ble_nearby) + ": " + (WaveNode.ble?.recent()?.size ?: 0), 13f))
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            row.addView(button(s(R.string.bt_visible)) { WaveNode.bt?.requestDiscoverable(this) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(button(s(R.string.radios_rescan)) { bg { WaveNode.bt?.scan(); WaveNode.wd?.rediscover() } }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            b.addView(row)
+            val wd = WaveNode.wd
+            b.addView(text(s(R.string.wd_title), 14f, true))
+            if (wd != null && wd.connectedTo.isNotEmpty()) {
+                b.addView(text(s(R.string.wd_connected) + " (" + wd.connectedTo + ")", 13f, color = getColor(R.color.wave_ok)))
+                b.addView(button(s(R.string.wd_disconnect)) { wd.disconnect() })
+            }
+            val wdPeers = wd?.peers?.values?.toList().orEmpty()
+            if (wdPeers.isEmpty()) b.addView(text(s(R.string.wd_none), 13f))
+            for (p in wdPeers) {
+                val r2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+                r2.addView(text("● " + p.hint.name.ifEmpty { p.device.deviceName }, 14f), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                r2.addView(button(s(R.string.wd_connect)) { wd?.connect(p.device.deviceAddress); toast(s(R.string.wd_note)) })
+                b.addView(r2)
+            }
+            if (!bt?.lastError.isNullOrEmpty() || !wd?.lastError.isNullOrEmpty())
+                b.addView(text(listOf(bt?.lastError, wd?.lastError).filter { !it.isNullOrEmpty() }.joinToString(" · "), 12f, color = getColor(R.color.wave_off)))
+            b.addView(button(s(R.string.radios_disable)) { bg { WaveNode.stopRadios() }; ui.postDelayed({ refreshLive() }, 300) })
+        }
         statusBox?.let { b ->
             b.removeAllViews()
             val srv = WaveNode.server
@@ -336,10 +390,10 @@ class MainActivity : Activity() {
         }
         peersBox?.let { b ->
             b.removeAllViews()
-            val disc = WaveNode.discovered()
-            if (disc.isEmpty() && WaveNode.manualPeers.isEmpty()) b.addView(text(s(R.string.store_no_devices), 13f))
-            for (p in disc) b.addView(text("● " + p.ann.name + "  (" + p.ip + ")  · " + p.ann.contentCount, 14f))
-            for (p in WaveNode.manualPeers) b.addView(text("○ " + p, 14f))
+            val routes = WaveNode.routes()
+            if (routes.isEmpty()) b.addView(text(s(R.string.store_no_devices), 13f))
+            val names = WaveNode.discovered().associate { "tcp:" + it.ip + ":" + it.ann.tcpPort to it.ann.name }
+            for (r in routes) b.addView(text("● " + (names[r.key] ?: r.toString()) + "  — " + s(R.string.via) + " " + mediumName(r.medium), 14f))
         }
         jobsBox?.let { b ->
             b.removeAllViews()
@@ -352,14 +406,15 @@ class MainActivity : Activity() {
                 val line = when (j.state) {
                     DownloadJob.State.RUNNING -> s(R.string.downloading) + " " + j.done + "/" + j.total + " · " + s(R.string.speed) + " " +
                         (if (secs > 0) human((j.bytes / secs).toLong()) + "/s" else "-")
-                    DownloadJob.State.DONE -> s(R.string.download_done) + " · " + human(m.size) + " · " + String.format(Locale.US, "%.1fs", j.seconds)
+                    DownloadJob.State.DONE -> s(R.string.download_done) + " · " + human(m.size) + " · " + String.format(Locale.US, "%.1fs", j.seconds) +
+                        " · " + j.perMedium.entries.joinToString(", ") { mediumName(it.key) + " " + it.value }
                     DownloadJob.State.FAILED -> s(R.string.download_failed) + ": " + j.error
                 }
                 b.addView(text(line, 12f, color = getColor(when (j.state) { DownloadJob.State.DONE -> R.color.wave_ok; DownloadJob.State.FAILED -> R.color.wave_off; else -> R.color.wave_primary })))
                 when (j.state) {
                     DownloadJob.State.RUNNING -> b.addView(button(s(R.string.cancel)) { j.cancel.set(true) })
                     DownloadJob.State.FAILED -> b.addView(button(s(R.string.download_resume)) {
-                        WaveNode.jobs.remove(j); WaveNode.startDownload(m, (j.peers + WaveNode.peers()).distinctBy { it.toString() }) })
+                        WaveNode.jobs.remove(j); WaveNode.startDownload(m, (j.peers + WaveNode.routes()).distinctBy { it.key }) })
                     else -> {}
                 }
             }
@@ -390,9 +445,13 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(code: Int, perms: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code, perms, results)
+        if (code == REQ_RADIOS) {
+            if (results.isNotEmpty() && results.all { it == PackageManager.PERMISSION_GRANTED }) enableRadios() else toast(s(R.string.permission_denied))
+            return
+        }
         if (code != REQ_SCAN) return
         if (results.isNotEmpty() && results.all { it == PackageManager.PERMISSION_GRANTED }) render() else toast(s(R.string.permission_denied))
     }
 
-    companion object { private const val REQ_SCAN = 7; private const val REQ_PICK = 8; private const val REQ_SAVE = 9 }
+    companion object { private const val REQ_SCAN = 7; private const val REQ_PICK = 8; private const val REQ_SAVE = 9; private const val REQ_RADIOS = 10 }
 }

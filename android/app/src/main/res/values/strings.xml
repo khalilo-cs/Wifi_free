@@ -28,12 +28,34 @@
     <string name="status_needs_permission" formatted="false">Needs permission</string>
     <string name="status_off" formatted="false">Turned off</string>
     <string name="status_ready" formatted="false">Ready — used for transfers</string>
+    <string name="status_discovery_only" formatted="false">Used to find nearby WAVE devices (too slow for files)</string>
     <string name="status_planned" formatted="false">Available on device; WAVE transfers over it are not supported yet</string>
-    <string name="nearby_scan" formatted="false">Scan Bluetooth / Wi-Fi Direct devices</string>
+    <string name="nearby_scan" formatted="false">List all radio devices nearby</string>
     <string name="nearby_scanning" formatted="false">Scanning…</string>
     <string name="nearby_none" formatted="false">No devices found</string>
-    <string name="nearby_note" formatted="false">This only lists radio devices nearby; file transfer uses Wi-Fi.</string>
+    <string name="nearby_note" formatted="false">This lists every radio device nearby (WAVE or not), for diagnostics.</string>
     <string name="permission_denied" formatted="false">Permission denied. You can allow it later in system settings.</string>
+    <string name="radios_title" formatted="false">Bluetooth &amp; Wi-Fi Direct (no router needed)</string>
+    <string name="radios_enable" formatted="false">Enable Bluetooth &amp; Wi-Fi Direct</string>
+    <string name="radios_disable" formatted="false">Turn off radios</string>
+    <string name="radios_off_note" formatted="false">Off. Turn on to share with phones nearby without any Wi-Fi network.</string>
+    <string name="bt_server_on" formatted="false">Bluetooth: accepting WAVE connections</string>
+    <string name="bt_server_off" formatted="false">Bluetooth: not sharing (sharing is off or Bluetooth is off)</string>
+    <string name="bt_turn_on" formatted="false">Turn on Bluetooth</string>
+    <string name="bt_peers" formatted="false">WAVE phones found over Bluetooth</string>
+    <string name="bt_visible" formatted="false">Make this phone visible over Bluetooth (5 min)</string>
+    <string name="radios_rescan" formatted="false">Search nearby again</string>
+    <string name="ble_nearby" formatted="false">WAVE beacons nearby (BLE)</string>
+    <string name="wd_title" formatted="false">WAVE phones over Wi-Fi Direct</string>
+    <string name="wd_none" formatted="false">None yet. The other phone must have radios and sharing ON.</string>
+    <string name="wd_connect" formatted="false">Connect</string>
+    <string name="wd_connected" formatted="false">Wi-Fi Direct group active</string>
+    <string name="wd_disconnect" formatted="false">Disconnect</string>
+    <string name="wd_note" formatted="false">The other phone will be asked to accept the connection.</string>
+    <string name="medium_tcp" formatted="false">Wi-Fi</string>
+    <string name="medium_wifi_direct" formatted="false">Wi-Fi Direct</string>
+    <string name="medium_bluetooth" formatted="false">Bluetooth</string>
+    <string name="via" formatted="false">via</string>
     <string name="store_search_hint" formatted="false">Search books, apps, videos…</string>
     <string name="store_search" formatted="false">Search</string>
     <string name="store_devices" formatted="false">WAVE devices on this network</string>
@@ -98,7 +120,7 @@
     <string name="settings_language" formatted="false">Language</string>
     <string name="settings_lang_system" formatted="false">System</string>
     <string name="settings_about" formatted="false">About</string>
-    <string name="settings_about_body" formatted="false">WAVE-NET 0.2 — transfers over Wi-Fi (same network or hotspot) with TLS 1.3 encryption, signed content and SHA-256 verification. Bluetooth / Wi-Fi Direct transfers are not supported yet.</string>
+    <string name="settings_about_body" formatted="false">WAVE-NET 0.3 — transfers over Wi-Fi (same network or hotspot) with TLS 1.3 encryption, signed content and SHA-256 verification. Bluetooth Classic and Wi-Fi Direct transfers are implemented but not yet field-tested; BLE is used for discovery only.</string>
     <string name="decision_allowed" formatted="false">Sharing allowed</string>
     <string name="decision_disabled" formatted="false">Sharing is turned off by you</string>
     <string name="decision_low_battery" formatted="false">Paused: battery below your limit</string>

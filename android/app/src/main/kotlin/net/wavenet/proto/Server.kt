@@ -35,6 +35,8 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
     private val perIp = HashMap<String, Int>()
     private val limiter = RateLimiter(20.0, 5.0)
     val chunksServed = AtomicLong(0)
+    /** Called after a peer authenticates: (peer node ID, remote key such as "ip:192.168.49.7" or "bt:AA:BB:..."). */
+    @Volatile var onPeer: ((String, String) -> Unit)? = null
     val refused = AtomicLong(0)
 
     fun servable(e: Entry): Boolean {
@@ -57,7 +59,7 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
         }
         if (!ok) { refused.incrementAndGet(); ch.close(); return }
         channels.add(ch)
-        try { serveLink(Tls.serverWrap(ch)) } catch (e: Exception) { } finally {
+        try { serveLink(Tls.serverWrap(ch), key) } catch (e: Exception) { } finally {
             ch.close(); channels.remove(ch)
             synchronized(perIp) { val n = (perIp[key] ?: 1) - 1; if (n <= 0) perIp.remove(key) else perIp[key] = n; active.decrementAndGet() }
         }
@@ -72,8 +74,9 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
         }
     }.apply { isDaemon = true; name = "wave-accept"; start() }
 
-    private fun serveLink(link: Link) {
+    private fun serveLink(link: Link, remoteKey: String) {
         val s = Session.respond(link, ctx.id, ctx.networkId, ctx.trust)
+        try { onPeer?.invoke(s.peerIdHex, remoteKey) } catch (e: Exception) { }
         val reqLimit = RateLimiter(1000.0, 500.0, 1)
         while (running.get()) {
             val f = try { s.recv(60_000) } catch (e: Exception) { return }
