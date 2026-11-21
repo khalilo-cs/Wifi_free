@@ -61,14 +61,20 @@ TEST(node_resume_after_interrupt) {
   auto m = a.publish(f);
   auto addr = a.serve();
   auto st1 = download(e.ctx, m.content_id, {addr}, [](uint32_t done, uint32_t) { return done < 10; });
-  CHECK(!st1.complete); CHECK_EQ(st1.fetched, 10u);
+  CHECK(!st1.complete);
+  // Stop honours in-flight requests: at most window-1 (=3) extra verified chunks arrive after the stop.
+  CHECK(st1.fetched >= 10u && st1.fetched <= 13u);
   // fresh store/catalog objects = simulated process restart
   Catalog cat2(e.dir / "catalog.db"); ContentStore store2(e.dir / "store");
   NodeContext ctx2{e.id, cat2, store2, 1, {}};
   auto st2 = download(ctx2, m.content_id, {addr});
   CHECK(st2.complete);
-  CHECK_EQ(st2.already_had, 10u);
-  CHECK_EQ(st2.fetched, m.chunk_count() - 10);  // correct chunks are not fetched again
+  CHECK_EQ(st2.already_had, st1.fetched);
+  CHECK_EQ(st2.fetched, m.chunk_count() - st1.fetched);  // correct chunks are not fetched again
+  // window=1 (no pipelining) stops exactly
+  TestNode e1("e2w1");
+  auto s1 = download(e1.ctx, m.content_id, {addr}, [](uint32_t done, uint32_t) { return done < 10; }, {1});
+  CHECK_EQ(s1.fetched, 10u);
   CHECK(sha256_file(store2.blob_path(m.content_id)) == m.content_id);
 }
 

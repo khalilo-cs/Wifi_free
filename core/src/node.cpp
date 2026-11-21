@@ -1,4 +1,5 @@
 #include "wavenet/node.hpp"
+#include <algorithm>
 #include <chrono>
 #include <deque>
 
@@ -192,9 +193,29 @@ Bytes PeerClient::chunk(const Hash256& cid, uint32_t idx) {
   return d;
 }
 
+uint64_t PeerClient::request_chunk(const Hash256& cid, uint32_t idx) {
+  uint64_t req = next_req_++;
+  s_->send(MsgType::CHUNK_REQUEST, wire::chunk_request(cid, idx), req);
+  return req;
+}
+
+Bytes PeerClient::receive_chunk(const Hash256& cid, uint32_t idx, uint64_t req) {
+  auto f = s_->recv(timeout_);
+  if (f.h.request_id != req) throw SessionError("response id mismatch");
+  if (f.h.type == MsgType::ERROR) throw SessionError("peer error: " + std::string(f.payload.begin(), f.payload.end()));
+  if (f.h.type != MsgType::DATA_CHUNK) throw SessionError("unexpected response type");
+  Reader r(f.payload, np::kMaxPayload);
+  auto c = r.fixed<32>(); uint32_t i = r.u32(); auto d = r.blob(); r.expect_done();
+  if (c != cid || i != idx) throw SessionError("chunk response mismatch");
+  return d;
+}
+
 // ---------------- downloader ----------------
-DownloadStats download(NodeContext& ctx, const Hash256& cid, const std::vector<PeerAddr>& peers, ProgressFn progress) {
+DownloadStats download(NodeContext& ctx, const Hash256& cid, const std::vector<PeerAddr>& peers, ProgressFn progress,
+                       DownloadOptions opt) {
   DownloadStats st;
+  const uint32_t window = std::clamp<uint32_t>(opt.window, 1, 64);
+  st.window = window;
   auto t0 = std::chrono::steady_clock::now();
   auto elapsed = [&] { return std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(); };
 
@@ -202,12 +223,25 @@ DownloadStats download(NodeContext& ctx, const Hash256& cid, const std::vector<P
   std::optional<Manifest> man;
   if (auto local = ctx.catalog.get(cid); local && local->state != LocalState::Remote && ctx.store.has_complete(cid))
     man = local->manifest;
-  for (auto& p : peers) {
-    try {
-      auto c = std::make_unique<PeerClient>(p, ctx);
-      if (!man) man = c->manifest(cid);
-      clients.push_back(std::move(c));
-    } catch (const std::exception& e) { st.error = std::string("peer ") + p.host + ":" + std::to_string(p.port) + ": " + e.what(); }
+  // Connect to all sources in parallel (each connect = TCP + TLS 1.3 + WAVE-NP handshake round trips).
+  {
+    std::vector<std::unique_ptr<PeerClient>> slots(peers.size());
+    std::vector<std::string> errs(peers.size());
+    std::vector<std::thread> cts;
+    for (size_t i = 0; i < peers.size(); ++i)
+      cts.emplace_back([&, i] {
+        try { slots[i] = std::make_unique<PeerClient>(peers[i], ctx); }
+        catch (const std::exception& e) { errs[i] = std::string("peer ") + peers[i].host + ":" + std::to_string(peers[i].port) + ": " + e.what(); }
+      });
+    for (auto& t : cts) t.join();
+    for (size_t i = 0; i < peers.size(); ++i) {
+      if (!slots[i]) { st.error = errs[i]; continue; }
+      if (!man) {
+        try { man = slots[i]->manifest(cid); }
+        catch (const std::exception& e) { st.error = std::string("peer ") + peers[i].host + ": " + e.what(); continue; }
+      }
+      clients.push_back(std::move(slots[i]));
+    }
   }
   if (!man) { st.error = st.error.empty() ? "content not found on any peer" : st.error; st.seconds = elapsed(); return st; }
   const Manifest m = *man;
@@ -221,20 +255,30 @@ DownloadStats download(NodeContext& ctx, const Hash256& cid, const std::vector<P
   std::mutex mu;
   std::atomic<bool> stop{false};
   auto worker = [&](PeerClient* c) {
-    uint32_t strikes = 0;
+    std::deque<std::pair<uint32_t, uint64_t>> inflight;  // (chunk index, request id), in send order
+    auto requeue_all = [&] { std::lock_guard lk(mu); for (auto& [i, r] : inflight) todo.push_back(i); inflight.clear(); };
     for (;;) {
-      uint32_t idx;
-      { std::lock_guard lk(mu); if (stop || todo.empty()) return; idx = todo.front(); todo.pop_front(); }
+      // Keep up to `window` requests outstanding.
+      while (inflight.size() < window) {
+        uint32_t idx;
+        { std::lock_guard lk(mu); if (stop || todo.empty()) break; idx = todo.front(); todo.pop_front(); }
+        try { inflight.emplace_back(idx, c->request_chunk(m.content_id, idx)); }
+        catch (...) { { std::lock_guard lk(mu); todo.push_back(idx); } requeue_all(); return; }  // peer gone
+      }
+      if (inflight.empty()) return;
+      auto [idx, req] = inflight.front();
       Bytes data;
-      try { data = c->chunk(m.content_id, idx); }
-      catch (...) { std::lock_guard lk(mu); todo.push_back(idx); return; }  // peer gone: requeue, retire worker
+      try { data = c->receive_chunk(m.content_id, idx, req); }
+      catch (...) { requeue_all(); return; }  // peer gone or misbehaving: hand its work back, retire worker
+      inflight.pop_front();
       if (!ctx.store.write_chunk(m, idx, data)) {
-        std::lock_guard lk(mu); ++st.rejected; todo.push_back(idx);
-        if (++strikes >= 1) return;  // a peer that sends one bad chunk is dropped for this download
-        continue;
+        { std::lock_guard lk(mu); ++st.rejected; todo.push_back(idx); }
+        requeue_all();
+        return;  // a peer that sends one bad chunk is dropped for this download
       }
       std::lock_guard lk(mu);
       ++st.fetched; st.bytes_fetched += data.size(); ++st.per_peer[c->describe()];
+      if (st.first_chunk_seconds < 0) st.first_chunk_seconds = elapsed();
       if (progress && !progress(st.fetched + st.already_had, st.total_chunks)) stop = true;
     }
   };

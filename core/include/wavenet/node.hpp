@@ -80,6 +80,9 @@ class PeerClient {
   std::vector<Manifest> search(const SearchQuery& q);
   std::optional<Manifest> manifest(const Hash256& cid);
   Bytes chunk(const Hash256& cid, uint32_t idx);  // raw, NOT yet verified
+  // Pipelining: send now, receive later. The server answers requests on a session in order.
+  uint64_t request_chunk(const Hash256& cid, uint32_t idx);
+  Bytes receive_chunk(const Hash256& cid, uint32_t idx, uint64_t req);
   NodeId peer_id() const { return s_->peer_id(); }
   std::string describe() const { return s_->link().describe(); }
   bool encrypted() const { return s_->link().encrypted(); }
@@ -95,6 +98,8 @@ struct DownloadStats {
   uint32_t total_chunks = 0, already_had = 0, fetched = 0, rejected = 0;
   uint64_t bytes_fetched = 0;
   double seconds = 0;
+  double first_chunk_seconds = -1;  // time from start until the first verified chunk was stored (TTFB)
+  uint32_t window = 0;
   std::map<std::string, uint32_t> per_peer;  // describe() -> chunks delivered
   std::string error;
 };
@@ -102,7 +107,11 @@ struct DownloadStats {
 // progress(fetched_so_far, total) — return false to stop (download stays resumable).
 using ProgressFn = std::function<bool(uint32_t, uint32_t)>;
 
+struct DownloadOptions {
+  uint32_t window = 4;  // outstanding chunk requests per source (1 = no pipelining)
+};
+
 DownloadStats download(NodeContext& ctx, const Hash256& cid, const std::vector<PeerAddr>& peers,
-                       ProgressFn progress = nullptr);
+                       ProgressFn progress = nullptr, DownloadOptions opt = {});
 
 }  // namespace wavenet

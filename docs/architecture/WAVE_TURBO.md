@@ -12,7 +12,12 @@
 - **Serving rules**: only public items held complete locally; downloaded items re-served only if the publisher
   allowed redistribution; max 32 concurrent connections, 60 s idle timeout.
 
+- **Pipelining** (T12): up to `window` (default 4) chunk requests in flight per source; server answers in order.
+  Stop/interrupt lets in-flight chunks complete (≤ window−1 extra, all verified and kept).
+- **Parallel connect** to all sources; TTFB (first verified chunk) reported.
+- Benchmark tool with emulated latency: `docs/BENCHMARK_PLAN.md`.
+
 ## Not yet implemented
-Request pipelining (currently 1 outstanding request per peer → RTT-bound), bandwidth/latency estimation,
+Bandwidth/latency estimation,
 adaptive chunk sizing, congestion control, priorities, previews, compression, battery/data limits.
-No throughput numbers are claimed yet (benchmark suite pending).
+Only emulated-latency, single-host numbers exist (see BENCHMARK_PLAN.md); no radio numbers.

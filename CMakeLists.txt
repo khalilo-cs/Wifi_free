@@ -33,3 +33,6 @@ endif()
 if(WAVENET_FUZZ)
   add_subdirectory(tests/fuzz)
 endif()
+
+add_executable(bench_transfer benchmarks/bench_transfer.cpp)
+target_link_libraries(bench_transfer PRIVATE wavenet_core)

@@ -115,7 +115,7 @@ static void usage() {
       "  serve [--bind H --port P --name N --announce-ms MS] [discovery opts]\n"
       "  peers [--discover SECONDS]          list nodes announcing on the LAN\n"
       "  search-net TEXT [--peer H:P ...] [--discover S]\n"
-      "  fetch CONTENT_ID [--peer H:P ...] [--discover S] [--out FILE] [--stop-after N]\n"
+      "  fetch CONTENT_ID [--peer H:P ...] [--discover S] [--out FILE] [--stop-after N] [--window W]\n"
       "  trust allow|block NODE_ID | trust mode open|allowlist\n"
       "discovery opts: --multicast-if IP  --disc-port P  --no-multicast  --seed H:P");
 }
@@ -223,8 +223,9 @@ int main(int argc, char** argv) {
         uint32_t pct = total ? done * 100 / total : 100;
         if (pct != last_pct && pct % 10 == 0) { std::fprintf(stderr, "  %u/%u chunks (%u%%)\n", done, total, pct); last_pct = pct; }
         return stop_after < 0 || long(done) < stop_after;
-      });
+      }, DownloadOptions{uint32_t(std::stoul(a.get("--window", "4")))});
       double mbps = st.seconds > 0 ? double(st.bytes_fetched) / st.seconds / (1024 * 1024) : 0;
+      if (st.first_chunk_seconds >= 0) std::fprintf(stderr, "first verified chunk after %.1f ms (window %u)\n", st.first_chunk_seconds * 1000, st.window);
       std::fprintf(stderr, "chunks: total=%u already_had=%u fetched=%u rejected=%u  bytes=%s  time=%.3fs  (%.1f MiB/s measured)\n",
                    st.total_chunks, st.already_had, st.fetched, st.rejected, human(st.bytes_fetched).c_str(), st.seconds, mbps);
       for (auto& [peer, n] : st.per_peer) std::fprintf(stderr, "  source %s: %u chunks\n", peer.c_str(), n);

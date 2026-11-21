@@ -16,3 +16,4 @@
 | D12 | 2026-11-21 | TLS 1.3 without PKI + exporter channel binding in WAVE-NP signatures | Standard primitives only; node keys stay the single identity; MITM detected (tested). |
 | D13 | 2026-11-21 | TLS layer sets SIGPIPE to ignore if still default | OpenSSL uses write(); a closing peer killed the process (exit 141) in tests. |
 | D14 | 2026-11-21 | Per-IP token bucket checked before TLS; per-IP + total connection caps; per-session request bucket | Cheapest possible rejection point for floods; all maps bounded. Defaults: burst 20, 5/s, 8 conns/IP, 500 req/s. |
+| D15 | 2026-11-21 | Pipelining window default 4 (CLI `--window`, max 64); parallel connect to sources | Measured: window removes RTT-bound behaviour; sequential connect inflated TTFB. 4 keeps memory low (≤ 4 × 1 MiB per source). |

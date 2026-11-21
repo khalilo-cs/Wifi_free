@@ -39,11 +39,12 @@ grep -q "$CID" "$T/search.log" || fail "remote search"
 step "interrupted fetch"
 set +e; "$BIN" --data "$T/e" fetch "$CID" --discover 3 --stop-after 7 $D > "$T/fetch1.log" 2>&1; RC=$?; set -e
 [ $RC -eq 3 ] || fail "expected incomplete fetch (rc=$RC)"
-grep -q "fetched=7" "$T/fetch1.log" || fail "expected 7 chunks in first attempt"
+F1=$(sed -n 's/.*fetched=\([0-9]*\).*/\1/p' "$T/fetch1.log")   # 7..10: in-flight pipelined chunks still complete
+[ "$F1" -ge 7 ] && [ "$F1" -le 10 ] || fail "unexpected chunk count in first attempt ($F1)"
 
 step "resumed fetch"
 "$BIN" --data "$T/e" fetch "$CID" --discover 3 --out "$T/out.bin" $D > "$T/fetch2.log" 2>&1 || fail "resume fetch"
-grep -q "already_had=7" "$T/fetch2.log" || fail "resume did not reuse verified chunks"
+grep -q "already_had=$F1 " "$T/fetch2.log" || fail "resume did not reuse verified chunks"
 [ "$(sha256sum "$T/out.bin" | cut -d' ' -f1)" = "$CID" ] || fail "downloaded file hash mismatch"
 cmp -s "$T/out.bin" "$T/solar.bin" || fail "content differs"
 

@@ -105,3 +105,14 @@ GCC 37/37, ASan+UBSan 37/37, TSan 37/37 (no warnings); `ctest` 3/3.
 - `server_per_ip_connection_cap_and_request_limit`: 3rd concurrent session from same IP refused (cap 2);
   request flood at 10/s → 15–25 served then "rate limited" and session closed; other session unaffected.
 - `docs/security/THREAT_MODEL.md`: 23 threats — mitigated+tested / partial / open, each linked to its test.
+
+## T12 — pipelining + benchmark (2026-11-21)
+GCC 37/37, ASan+UBSan 37/37, TSan 37/37; `ctest` 3/3.
+- Stop semantics changed by pipelining: in-flight chunks complete after a stop (≤ window−1 extra, verified). Unit and e2e
+  tests now require resume to reuse exactly the chunks actually fetched; new check: window=1 stops at exactly 10 chunks.
+- Benchmark (Release, 32 MiB, emulated one-way delay, single host): full table in
+  `benchmarks/results/2026-11-21-loopback-emulated.md`. 25 ms: window 1 → 4.4 MiB/s, window 16 → 46.3 MiB/s (1 source);
+  2 sources window 16 → 65.7 MiB/s. Handshake ≈ 104 ms at 25 ms (≈ 2 RTT).
+- **Defect found by the benchmark:** sources were connected sequentially (TTFB 347 ms with 2 sources vs 254 ms with 1, at
+  25 ms) → fixed with parallel connect → 249 ms.
+- Emulated latency on loopback only; **not radio measurements.**
