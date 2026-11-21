@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WaveTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/wave_primary</item>
+        <item name="android:colorAccent">@color/wave_accent</item>
+        <item name="android:statusBarColor">@color/wave_primary</item>
+    </style>
+    <color name="wave_primary">#0F6FAE</color>
+    <color name="wave_accent">#0A9396</color>
+    <color name="wave_ok">#106B3A</color>
+    <color name="wave_warn">#9A5B00</color>
+    <color name="wave_off">#8A1C1C</color>
+</resources>

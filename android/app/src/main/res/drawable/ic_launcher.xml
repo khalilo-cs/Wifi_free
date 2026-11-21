@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple vector launcher icon: three waves on a blue disc. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#0F6FAE" android:pathData="M24,2a22,22 0,1 0,0.01 0z"/>
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M10,18c4.7,-4 9.3,4 14,0s9.3,4 14,0M10,25c4.7,-4 9.3,4 14,0s9.3,4 14,0M10,32c4.7,-4 9.3,4 14,0s9.3,4 14,0"/>
+</vector>

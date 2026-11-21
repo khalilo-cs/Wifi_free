@@ -19,3 +19,5 @@
 | D15 | 2026-11-21 | Pipelining window default 4 (CLI `--window`, max 64); parallel connect to sources | Measured: window removes RTT-bound behaviour; sequential connect inflated TTFB. 4 keeps memory low (≤ 4 × 1 MiB per source). |
 | D16 | 2026-11-21 | Relays splice raw bytes; TLS + WAVE handshake run end-to-end through them; relaying opt-in | Relays never hold keys or plaintext; reuses tested session security; directive: no forced resource sharing. |
 | D17 | 2026-11-21 | Route requests detected by peeking magic+version+type (7 bytes), not 1 byte | Mutation testing showed 1-byte detection confused plaintext sessions with relay requests. |
+| D18 | 2026-11-21 | Request location on all Android versions for BLE/Wi-Fi Direct scans (temporary) | `neverForLocation` needs an API 31+ android.jar, unavailable here; without it Android requires location. Revert with a modern SDK. |
+| D19 | 2026-11-21 | Build Android without AGP (Debian android.jar 23 + aapt2 + dx + apksigner, Kotlin from Maven Central), minSdk 26 | Google hosts are blocked and access was declined; this is the only reproducible path available. |

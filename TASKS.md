@@ -18,4 +18,6 @@
 | T13 | Threat model document (THREAT_MODEL.md) + rate limiting on handshakes | DONE |
 | T14 | Prior-art research docs (PRIOR_ART.md, REFERENCES.md, NOVELTY_HYPOTHESES.md, RESEARCH_GAPS.md) | TODO |
 | T15 | Multi-hop relay (ROUTE_PROPOSAL/COMMIT), source-routed, end-to-end TLS | DONE (manual routes) |
-| T16 | Android app (Kotlin) + JNI binding of core; BLE/Wi-Fi Direct `Link`s | BLOCKED (no Android SDK in this environment) |
+| T16 | Android app stage 1: reproducible signed APK, capability detection, permissions, resource policy, AR/EN UI | DONE (built + JVM-tested; NOT run on a device) |
+| T17 | Android stage 2: WAVE LAN client in Kotlin (TLS + channel binding) + identity in Android Keystore; interop test vs Linux node | TODO |
+| T18 | Android BLE / Wi-Fi Direct `Link`s (needs real phones) | BLOCKED (no devices) |

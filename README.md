@@ -45,3 +45,8 @@ See `docs/security/` and `docs/protocol/NETWORK_PROTOCOL.md`.
 
 ## Project tracking
 `MASTER_PLAN.md` · `TASKS.md` · `DECISIONS_LOG.md` · `TEST_REPORT.md` · `CLAUDE.md` · `docs/`
+
+## Android (stage 1, experimental)
+`cd android && gradle :app:test :app:apk` builds a signed debug APK (see `docs/architecture/ANDROID_ARCHITECTURE.md` for the
+toolchain without Google's SDK servers). It detects radios, asks permissions, sets resource limits, and lists nearby
+BLE / Wi-Fi Direct devices. It does **not** transfer content yet and has **not** been run on a real device.

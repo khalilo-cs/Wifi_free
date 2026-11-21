@@ -131,3 +131,14 @@ GCC 42/42, ASan+UBSan 42/42, TSan 42/42; `ctest` 3/3; `wave5.sh` 2/2 runs.
 - WAVE-5 now runs B as `--relay`: client R fetched 16 MiB from A only via B, hash OK; B reported
   "chunks served: 0, relayed circuits: 1"; C (no `--relay`) refused to relay.
 - Single host only: not evidence of radio multi-hop range or performance.
+
+## T16 — Android stage 1 (2026-11-21)
+`cd android && gradle :app:test :app:apk`:
+- JVM tests: CapabilityTest 5/5, PolicyTest 7/7, StringsTest 2/2 (14 total, 0 failures).
+- APK `wavenet-0.1.0-debug.apk` (778,741 bytes): `aapt2 dump badging` → package net.wavenet.app, minSdk 26, targetSdk 34,
+  locales default + ar, icon present, all radios and location hardware *not required*; `apksigner verify` → v2 + v3 OK;
+  `zipalign -c -p 4` OK; `dexdump` → 1060 classes incl. all net.wavenet.app / net.wavenet.core classes.
+- Problems found by verification and fixed: (1) aapt2 implied `android.hardware.location` as REQUIRED (would hide the app
+  from devices without GPS) → declared optional; (2) Gradle `dex`/`apk` tasks lacked declared inputs and silently kept a stale
+  APK → inputs declared, rebuild confirmed (new size, icon present).
+- **Not tested: running on a phone or emulator** (no device; emulator images need dl.google.com). UI behaviour is unverified.
