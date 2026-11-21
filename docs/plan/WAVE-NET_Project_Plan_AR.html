@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>WAVE-NET ∞ — وثيقة المشروع الكاملة</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --ink:#14202e; --muted:#5b6777; --accent:#0f6fae; --accent2:#0a9396; --line:#d6dde6; --soft:#f2f6fa; --warn:#9a5b00; --warnbg:#fff6e5; --ok:#106b3a; --okbg:#e8f6ee; --bad:#8a1c1c; --badbg:#fbeaea; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Noto Naskh Arabic", "Amiri", "DejaVu Sans", serif; color: var(--ink); font-size: 11pt; line-height: 1.75; margin: 0; background:#fff; }
+  h1, h2, h3 { font-family: "Noto Kufi Arabic", "Noto Sans Arabic", sans-serif; line-height: 1.4; color: var(--ink); }
+  h1 { font-size: 22pt; margin: 0 0 6mm; }
+  h2 { font-size: 15pt; margin: 9mm 0 3mm; padding-bottom: 2mm; border-bottom: 2px solid var(--accent); }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  h3 { font-size: 12pt; margin: 6mm 0 2mm; color: var(--accent); }
+  p { margin: 0 0 3mm; }
+  .en, code { direction: ltr; unicode-bidi: isolate; font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; }
+  .lat { direction: ltr; unicode-bidi: isolate; font-family: "Noto Sans", "DejaVu Sans", sans-serif; }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.6pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th { background: var(--accent); color: #fff; font-family: "Noto Kufi Arabic", sans-serif; font-weight: 600; padding: 2mm 2.2mm; text-align: right; }
+  td { border-bottom: 1px solid var(--line); padding: 1.8mm 2.2mm; vertical-align: top; }
+  tr:nth-child(even) td { background: var(--soft); }
+  .num { direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+  .tag { display: inline-block; padding: 0 2mm; border-radius: 2mm; font-size: 8.6pt; font-family: "Noto Kufi Arabic", sans-serif; white-space: nowrap; }
+  .ok { background: var(--okbg); color: var(--ok); }
+  .part { background: var(--warnbg); color: var(--warn); }
+  .no { background: var(--badbg); color: var(--bad); }
+  .box { border: 1px solid var(--line); border-right: 4px solid var(--accent2); background: var(--soft); padding: 3mm 4mm; margin: 3mm 0 5mm; border-radius: 1.5mm; }
+  .warn { border-right-color: var(--warn); background: var(--warnbg); }
+  .pb { page-break-before: always; }
+  ul, ol { margin: 0 0 3mm; padding-right: 6mm; padding-left: 0; }
+  li { margin-bottom: 1mm; }
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .cover .logo { font-family: "Noto Sans", sans-serif; font-size: 40pt; font-weight: 700; letter-spacing: 1px; color: var(--accent); direction: ltr; }
+  .cover .sub { font-family: "Noto Kufi Arabic", sans-serif; font-size: 15pt; margin-top: 4mm; }
+  .cover .meta { margin-top: 18mm; color: var(--muted); font-size: 10.5pt; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0 6mm; }
+  .kpi { border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; text-align: center; background: #fff; }
+  .kpi b { display: block; font-family: "Noto Sans", sans-serif; font-size: 18pt; color: var(--accent); direction: ltr; }
+  .kpi span { font-size: 9pt; color: var(--muted); }
+  .toc li { margin-bottom: 0.6mm; }
+  .arch { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5mm; margin: 3mm 0 5mm; }
+  .layer { border: 1px solid var(--line); border-radius: 1.5mm; padding: 2mm 3mm; font-size: 9.6pt; }
+  .layer b { font-family: "Noto Kufi Arabic", sans-serif; }
+  .bar { height: 4mm; background: var(--accent2); border-radius: 1mm; }
+  .gantt td { padding: 1mm 1mm; font-size: 8.6pt; }
+  .gantt td.c { width: 6%; }
+  .gantt .f { background: var(--accent2) !important; }
+  .small { font-size: 9pt; color: var(--muted); }
+  footer { font-size: 8.5pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="logo">WAVE-NET ∞</div>
+  <div class="sub">الإنترنت الموزّع المستقل<br><span class="lat" style="font-size:11pt;color:#5b6777">The Autonomous Distributed Internet</span></div>
+  <p style="margin-top:12mm;font-size:12pt">وثيقة المشروع الكاملة: الفكرة، والمعمارية، والحالة الفعلية، وخطة التنفيذ،<br>والفريق، والتكاليف، والجدول الزمني، والمخاطر، والمتطلبات</p>
+  <div class="meta">
+    الإصدار <span class="num">1.0</span> · <span class="num">2026-11-21</span><br>
+    حالة الكود: نموذج أولي عامل <span class="lat">v0.1</span> (لينكس) · تطبيق أندرويد قيد البناء<br>
+    المستودع: <span class="lat">khalilo-cs/Wifi_free</span> · الفرع <span class="lat">ccr-cbef0079-uduwdc</span>
+  </div>
+</section>
+
+<!-- ===================== TOC ===================== -->
+<section class="pb">
+<h2>المحتويات</h2>
+<ol class="toc">
+  <li>الملخص التنفيذي</li>
+  <li>المشكلة والرؤية</li>
+  <li>ما هو المشروع وما ليس هو (حدود صادقة)</li>
+  <li>المعمارية: الأنظمة العشرة <span class="lat">W0–W9</span></li>
+  <li>بروتوكول <span class="lat">WAVE-NP</span></li>
+  <li>نموذج الأمان</li>
+  <li>الحالة الفعلية: ما بُني واختُبر</li>
+  <li>نتائج القياس (المقاسة فعلاً)</li>
+  <li>ما تبقى وما هو محجوب</li>
+  <li>خطة التنفيذ والمراحل</li>
+  <li>الفريق المطلوب</li>
+  <li>التكاليف (ثلاثة سيناريوهات)</li>
+  <li>الجدول الزمني</li>
+  <li>العتاد والبنية التحتية</li>
+  <li>المخاطر وطرق التخفيف</li>
+  <li>المتطلبات اللازمة للمتابعة</li>
+  <li>مؤشرات النجاح</li>
+  <li>الأعمال السابقة والتموضع</li>
+  <li>الخطوات التالية المباشرة</li>
+</ol>
+<div class="box warn"><b>تنبيه منهجي:</b> كل ما في هذه الوثيقة عن «الحالة الفعلية» و«نتائج القياس» مأخوذ من كود واختبارات شُغّلت فعلاً ومسجلة في <span class="lat">TEST_REPORT.md</span>. أما التكاليف والمدد فهي <b>تقديرات تخطيطية</b> مبنية على افتراضات مذكورة صراحة، وليست عروض أسعار، ويجب التحقق منها مع موردين وفرق حقيقية قبل اتخاذ قرار مالي.</div>
+</section>
+
+<!-- ===================== 1 ===================== -->
+<section class="pb">
+<h2>١. الملخص التنفيذي</h2>
+<p><b>WAVE-NET ∞</b> شبكة رقمية موزعة تُبنى من الأجهزة المشاركة نفسها: هواتف وحواسيب وعقد صغيرة. تتيح هذه الأجهزة لبعضها نشر المحتوى والتطبيقات والملفات والخدمات واكتشافها وتنزيلها مباشرة، عبر أي وسيلة اتصال متاحة. تعمل الخدمات المحلية دون إنترنت خارجي، ويتم الوصول إلى الإنترنت العالمي عبر «بوابات» يتطوع بها أصحابها.</p>
+<p>المشروع ليس فكرة على الورق فقط. يوجد الآن <b>نموذج أولي عامل ومختبر</b> على لينكس، يثبت السلسلة الأساسية كاملة: هوية تشفيرية لكل جهاز، واكتشاف تلقائي على الشبكة المحلية، وبحث، ونشر، وتنزيل مجزأ من عدة مصادر مع استكمال بعد الانقطاع، وتحقق من سلامة الملف، واتصال مشفر، وعقد مرحِّلة متعددة القفزات، وحماية من الإغراق.</p>
+<div class="kpis">
+  <div class="kpi"><b>42</b><span>اختبار وحدة ناجح</span></div>
+  <div class="kpi"><b>3</b><span>اختبارات شاملة بعمليات منفصلة</span></div>
+  <div class="kpi"><b>23</b><span>تهديداً أمنياً محللاً</span></div>
+  <div class="kpi"><b>~2,300</b><span>سطر كود أساسي <span class="lat">C++20</span></span></div>
+</div>
+<h3>أهم ما يجب معرفته</h3>
+<ul>
+  <li><b>ما يعمل اليوم:</b> شبكة محلية عبر Wi-Fi/LAN بين أجهزة لينكس، بتشفير <span class="lat">TLS 1.3</span>، مع سيناريو الأجهزة الخمسة <span class="lat">WAVE-5</span> كاملاً على جهاز واحد.</li>
+  <li><b>ما لم يعمل بعد:</b> الراديو (بلوتوث و<span class="lat">Wi-Fi Direct</span>) على هواتف حقيقية، وتطبيق أندرويد كامل، والتوجيه التلقائي، وواجهة المتجر.</li>
+  <li><b>أكبر عائق حالي:</b> حزمة أدوات أندرويد الرسمية محجوبة في بيئة التطوير السحابية، ولا توجد هواتف حقيقية للاختبار.</li>
+  <li><b>التقدير للوصول إلى تجربة ميدانية عامة:</b> نحو <span class="num">10–14</span> شهراً مع فريق صغير من <span class="num">4–5</span> أشخاص، بتكلفة تقديرية بين <span class="num">$202k</span> و<span class="num">$507k</span> بأسعار المنطقة العربية والعمل عن بعد (التفاصيل في القسم ١٢).</li>
+</ul>
+</section>
+
+<!-- ===================== 2 ===================== -->
+<section>
+<h2>٢. المشكلة والرؤية</h2>
+<h3>المشكلة</h3>
+<ul>
+  <li>ملايين الناس لديهم هواتف ذكية لكن اتصالهم بالإنترنت ضعيف أو مكلف أو منقطع: مناطق نائية، وكوارث، وانقطاعات، وأماكن مزدحمة.</li>
+  <li>مشاركة ملف أو تطبيق أو درس تعليمي بين شخصين في الغرفة نفسها تمر غالباً عبر خوادم بعيدة، فتستهلك بيانات مدفوعة دون داعٍ.</li>
+  <li>المحتوى المحلي المفيد (كتب، ودروس، وخدمات مجتمعية) لا يجد طريقة بسيطة وآمنة للانتشار بين الأجهزة القريبة.</li>
+</ul>
+<h3>الرؤية</h3>
+<p>شبكة يكون فيها كل جهاز، <b>بموافقة صاحبه وضمن حدود يضعها</b> للبطارية والبيانات والتخزين، قادراً على أن يكون مستخدماً أو ناشراً أو مستضيفاً للمحتوى أو مرحِّلاً أو ذاكرة مؤقتة أو بوابة للإنترنت أو مشغلاً للخدمات. يختار النظام أسرع وسيلة اتصال متاحة، ويتحقق تلقائياً من سلامة كل ما يُنقل، ولا يُجبر أحداً على تحويل جهازه إلى خادم.</p>
+<h3>حالات استخدام مستهدفة</h3>
+<table>
+  <tr><th>الحالة</th><th>المثال</th></tr>
+  <tr><td>التعليم دون إنترنت</td><td>معلم ينشر دروساً وكتباً من هاتفه، فينزلها الطلاب في الفصل مباشرة.</td></tr>
+  <tr><td>المجتمعات النائية</td><td>جهاز واحد متصل بالإنترنت يعمل بوابة، والباقون يصلون عبره، أو يتبادلون المحتوى المخزن محلياً.</td></tr>
+  <tr><td>الطوارئ والكوارث</td><td>نشر معلومات إسعاف وخرائط ووثائق بين الناس عند انقطاع الشبكات.</td></tr>
+  <tr><td>توزيع التطبيقات</td><td>مشاركة ملفات APK موقعة ومتحقق من سلامتها بين الأجهزة القريبة، مع موافقة المستخدم على التثبيت دائماً.</td></tr>
+  <tr><td>توفير البيانات</td><td>تنزيل ملف كبير مرة واحدة ثم مشاركته محلياً بدل تنزيله عشرات المرات من الإنترنت.</td></tr>
+</table>
+</section>
+
+<!-- ===================== 3 ===================== -->
+<section class="pb">
+<h2>٣. ما هو المشروع وما ليس هو</h2>
+<div class="box">
+<b>المشروع هو:</b> طبقة شبكية وبرمجية فوق الأجهزة الموجودة، تتعاون فيها الأجهزة لنقل المحتوى والخدمات، وتستخدم الإنترنت عند توفره عبر البوابات.
+</div>
+<div class="box warn">
+<b>المشروع ليس:</b>
+<ul style="margin-top:2mm">
+  <li><b>ليس بديلاً سحرياً عن مزودي الإنترنت.</b> البلوتوث والواي فاي المحلي لا ينشئان اتصالاً بالإنترنت العالمي من تلقاء نفسيهما. الوصول العالمي يتطلب دائماً بوابة متصلة فعلاً.</li>
+  <li><b>ليس شبكة فائقة السرعة في كل الظروف.</b> البلوتوث منخفض السرعة مقارنة بالواي فاي، والسرعة الفعلية تعتمد على العتاد والمسافة والازدحام. ستعرض الواجهة السرعة الحقيقية المقاسة، لا وعوداً.</li>
+  <li><b>ليس معياراً معتمداً للإنترنت.</b> بروتوكول <span class="lat">WAVE-NP</span> تجريبي خاص بالمشروع، ويعتمد على معايير قائمة (<span class="lat">TLS 1.3</span>، و<span class="lat">Ed25519</span>، و<span class="lat">SHA-256</span>) بدل اختراع التشفير.</li>
+  <li><b>ليس نظام تشغيل جديداً.</b> يعمل فوق لينكس وأندرويد. العتاد المستقل مرحلة بحثية لاحقة.</li>
+  <li><b>ليس ضماناً لسلامة المحتوى.</b> التحقق من البصمة يثبت أن الملف لم يتغير، لا أنه آمن أو قانوني.</li>
+  <li><b>لن يدعم تثبيت تطبيقات iOS</b> خارج آليات Apple الرسمية.</li>
+</ul>
+</div>
+</section>
+
+<!-- ===================== 4 ===================== -->
+<section>
+<h2>٤. المعمارية: الأنظمة العشرة</h2>
+<p>صُمم المشروع كطبقات مستقلة، يمكن تطوير كل منها واختبارها وحدها. يوضح الجدول حالة كل نظام بصدق:</p>
+<table>
+  <tr><th style="width:17%">النظام</th><th>المسؤولية</th><th style="width:15%">الحالة</th></tr>
+  <tr><td><span class="lat">W0</span> النواة</td><td>تشغيل العقدة، وحالة الشبكة، وإدارة الموارد، والتخزين الدائم</td><td><span class="tag part">جزئي</span></td></tr>
+  <tr><td><span class="lat">W1</span> نسيج الراديو</td><td>طبقة نقل موحدة <span class="lat">Link</span>: TCP وTLS منفذان، والبلوتوث وWi-Fi Direct/Aware مخطط لها</td><td><span class="tag part">جزئي</span></td></tr>
+  <tr><td><span class="lat">W2</span> الاكتشاف</td><td>إعلانات موقعة عبر UDP multicast، وجدول أقران محدود الحجم</td><td><span class="tag ok">منفذ (LAN)</span></td></tr>
+  <tr><td><span class="lat">W3</span> نسيج الشبكة</td><td>جلسات موثقة، وترحيل متعدد القفزات بمسارات يحددها المرسل</td><td><span class="tag part">جزئي (بلا توجيه تلقائي)</span></td></tr>
+  <tr><td><span class="lat">W4</span> محرك النوايا</td><td>تحويل طلب المستخدم إلى عملية شبكية</td><td><span class="tag no">مخطط</span></td></tr>
+  <tr><td><span class="lat">W5</span> تشغيل الخدمات</td><td>WebAssembly، وتطبيقات ويب محلية، وDNS محلي</td><td><span class="tag no">مخطط</span></td></tr>
+  <tr><td><span class="lat">W6</span> نسيج البيانات</td><td>عنونة بالمحتوى، وتجزئة، وتحقق SHA-256، واستكمال</td><td><span class="tag ok">منفذ</span></td></tr>
+  <tr><td><span class="lat">W7</span> الاستمرارية</td><td>استمرار المحتوى بعد خروج المصدر (منفذ)، ونقل حالة الخدمات (مخطط)</td><td><span class="tag part">جزئي</span></td></tr>
+  <tr><td><span class="lat">W8</span> الثقة والأمان</td><td>هوية Ed25519، وTLS 1.3 مع ربط القناة، وقوائم الثقة، وتحديد المعدل</td><td><span class="tag ok">منفذ (الأساس)</span></td></tr>
+  <tr><td><span class="lat">W9</span> الربط العالمي</td><td>البوابات، وجسور المجتمعات، و«خزّن واحمل ومرّر»</td><td><span class="tag no">مخطط</span></td></tr>
+</table>
+<h3>مبدأ «تعدد الوسائط»</h3>
+<p>كل وسيلة اتصال تنفذ الواجهة نفسها <span class="lat">Link</span>. الجهاز الذي لا يدعم تقنية ما (مثل <span class="lat">Wi-Fi Aware</span>، المتوفرة في بعض الهواتف فقط) يعطلها دون أن يتعطل باقي التطبيق. التشفير والتوثيق يعملان فوق أي وسيلة نقل بالطريقة نفسها.</p>
+</section>
+
+<!-- ===================== 5 ===================== -->
+<section class="pb">
+<h2>٥. بروتوكول <span class="lat">WAVE-NP</span></h2>
+<p>بروتوكول تجريبي داخلي. كل رسالة «إطار» له ترويسة ثابتة وحمولة وتوقيع رقمي:</p>
+<table>
+  <tr><th>الحقل</th><th>الغرض</th></tr>
+  <tr><td>المعرّف السحري <span class="lat">WVNP</span> + الإصدار</td><td>التمييز ودعم تطور البروتوكول دون كسر الإصدارات القديمة</td></tr>
+  <tr><td>نوع الرسالة</td><td>22 نوعاً، منها: إعلان العقدة، والبحث، والـ Manifest، وطلب الجزء، والجزء، واقتراح المسار، وتأكيده</td></tr>
+  <tr><td>معرّف الشبكة</td><td>فصل الشبكات المستقلة عن بعضها</td></tr>
+  <tr><td>المفتاح العام للمرسل، والوجهة</td><td>معرفة من أرسل الرسالة ولمن</td></tr>
+  <tr><td>رقم الطلب، والتسلسل، والوقت، وحد القفزات</td><td>ربط الردود بالطلبات، ومنع إعادة الإرسال (Replay)، والتحكم في الانتشار</td></tr>
+  <tr><td>الحمولة (حتى ≈ <span class="num">1 MiB</span>)</td><td>البيانات</td></tr>
+  <tr><td>توقيع <span class="lat">Ed25519</span></td><td>إثبات المصدر وكشف أي تعديل</td></tr>
+</table>
+<p><b>القرار المعماري الأهم:</b> لا يشفر البروتوكول البيانات بنفسه، بل يعمل داخل <span class="lat">TLS 1.3</span>. ويشمل كل توقيع قيمة سرية مستخرجة من جلسة TLS (<span class="lat">exporter</span>، وفق النهج الموصوف في <span class="lat">RFC 9266</span>)، فإذا حاول مهاجم الجلوس في المنتصف تفشل التواقيع فوراً. ثبت ذلك باختبار، وثبت أيضاً أن الهجوم ينجح إذا عُطّلت هذه الآلية، وهذا يؤكد أنها هي ما يحمي الاتصال.</p>
+<h3>معايير قائمة تُستخدم أو تُدرس</h3>
+<p><span class="lat">TLS 1.3</span> (مستخدم) · <span class="lat">Ed25519 / RFC 8032</span> (مستخدم) · <span class="lat">SHA-256</span> (مستخدم) · <span class="lat">QUIC</span> (للدراسة كبديل للنقل) · <span class="lat">DTN Bundle Protocol RFC 9171</span> (لـ«خزّن واحمل ومرّر») · <span class="lat">IPv6 over BLE RFC 7668</span> (لطبقة البلوتوث).</p>
+</section>
+
+<!-- ===================== 6 ===================== -->
+<section>
+<h2>٦. نموذج الأمان</h2>
+<p>حُلّل <b>23 تهديداً</b> في وثيقة <span class="lat">THREAT_MODEL.md</span>، وصُنّف كل منها: معالج ومختبر، أو جزئي، أو مفتوح. أبرزها:</p>
+<table>
+  <tr><th>التهديد</th><th>الحماية</th><th style="width:14%">الحالة</th></tr>
+  <tr><td>التنصت على الاتصال</td><td>تشفير TLS 1.3 لكل جلسة (اختبار يثبت أن النص لا يظهر على الشبكة)</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>انتحال عقدة / رجل في المنتصف</td><td>توقيع Ed25519 مربوط بجلسة TLS</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>ملفات مزورة أو تالفة</td><td>بصمة SHA-256 لكل جزء من Manifest موقّع، واستبعاد المصدر الخبيث</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>المرحِّل يقرأ البيانات أو يحوّل الاتصال لعقدة مزيفة</td><td>تشفير من الطرف إلى الطرف عبر المرحِّل، والتحقق من هوية الهدف</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>إغراق العقدة بالاتصالات</td><td>حدّ معدل لكل عنوان قبل أي عمل مكلف، وسقف للاتصالات</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>تسرب المحتوى الخاص</td><td>المحتوى الخاص لا يظهر في البحث ولا يُخدَّم للآخرين أبداً</td><td><span class="tag ok">معالج</span></td></tr>
+  <tr><td>هويات وهمية كثيرة (Sybil)</td><td>جداول محدودة، وحدود لكل عنوان، وقوائم سماح اختيارية</td><td><span class="tag part">جزئي</span></td></tr>
+  <tr><td>عزل الضحية (Eclipse)</td><td>تعدد المصادر فقط</td><td><span class="tag no">مفتوح</span></td></tr>
+  <tr><td>تطبيقات APK خبيثة</td><td>لا يوجد فحص بعد (متجر التطبيقات غير منفذ)</td><td><span class="tag no">مفتوح</span></td></tr>
+  <tr><td>تحليل حركة المرور (من يتصل بمن)</td><td>غير مغطى في الإصدار الحالي</td><td><span class="tag no">مفتوح</span></td></tr>
+</table>
+<p class="small">كل الكود الأمني يُختبر أيضاً تحت أدوات فحص الذاكرة <span class="lat">(ASan/UBSan)</span> وفحص التزامن <span class="lat">(TSan)</span>، ومفكك الرسائل خضع لـ fuzzing بأكثر من مليون مدخل عشوائي. مراجعة أمنية خارجية مستقلة <b>ضرورية</b> قبل أي إطلاق عام.</p>
+</section>
+
+<!-- ===================== 7 ===================== -->
+<section class="pb">
+<h2>٧. الحالة الفعلية: ما بُني واختُبر</h2>
+<table>
+  <tr><th style="width:7%">المهمة</th><th>الوصف</th><th style="width:30%">الدليل</th></tr>
+  <tr><td class="num">T1–T2</td><td>البصمة SHA-256، والترميز الآمن، وهوية Ed25519 بملف مفتاح محمي</td><td>متجهات اختبار FIPS 180-2 وRFC 8032</td></tr>
+  <tr><td class="num">T3</td><td>إطارات WAVE-NP موقعة وفحص صارم</td><td>رفض كل تغيير في أي بت، وfuzzing بـ 1.15 مليون مدخل</td></tr>
+  <tr><td class="num">T4–T5</td><td>Manifest موقّع، وتخزين بالمحتوى، وفهرس SQLite وبحث</td><td>الاستكمال بعد إعادة التشغيل، ورفض أسماء الملفات الخطرة</td></tr>
+  <tr><td class="num">T6–T7</td><td>جلسات موثقة متبادلة، واكتشاف عبر UDP multicast</td><td>رفض الإعادة، ورفض العقد غير الموثوقة</td></tr>
+  <tr><td class="num">T8–T9</td><td>تنزيل متعدد المصادر قابل للاستكمال، وأداة سطر الأوامر <span class="lat">wavenode</span></td><td>اختبار عمليات منفصلة، والملف النهائي مطابق بايتاً ببايت</td></tr>
+  <tr><td class="num">T10</td><td>سيناريو WAVE-5 بخمس عقد</td><td>الاستمرار بعد خروج الناشر، ومرحِّل حقيقي</td></tr>
+  <tr><td class="num">T11</td><td>تشفير TLS 1.3 مع ربط القناة</td><td>اختبارا المتنصت ورجل المنتصف، واختبار تعطيل الحماية</td></tr>
+  <tr><td class="num">T12</td><td>إرسال طلبات متعددة مسبقاً (Pipelining)، واتصال متوازٍ، وأداة قياس</td><td>تحسن يصل إلى ≈ <span class="num">10×</span> على رابط بطيء محاكى</td></tr>
+  <tr><td class="num">T13</td><td>تحديد المعدل، ونموذج التهديدات</td><td>رفض 25 من 30 اتصالاً في هجوم إغراق</td></tr>
+  <tr><td class="num">T15</td><td>ترحيل متعدد القفزات بتشفير من الطرف إلى الطرف</td><td>قفزتان وثلاث، والمرحِّل لا يرى النص</td></tr>
+  <tr><td class="num">T16</td><td>تطبيق أندرويد (Kotlin)</td><td><span class="tag part">قيد البناء</span> بأدوات بديلة</td></tr>
+</table>
+<h3>أخطاء حقيقية اكتُشفت وأُصلحت أثناء العمل</h3>
+<ul>
+  <li>تعارض بين الخيوط (<span class="lat">data race</span>) في إغلاق الاتصال، كشفته أداة TSan.</li>
+  <li>توقف البرنامج كاملاً عند إغلاق الطرف الآخر لاتصال مشفر (<span class="lat">SIGPIPE</span>).</li>
+  <li>اتصال متسلسل بالمصادر أبطأ وقت الوصول لأول بايت، كشفته أداة القياس (من <span class="num">347</span> إلى <span class="num">249</span> مللي ثانية بعد الإصلاح).</li>
+  <li>خلط بين طلبات الترحيل والجلسات غير المشفرة، كشفه اختبار التعطيل المتعمد.</li>
+</ul>
+</section>
+
+<!-- ===================== 8 ===================== -->
+<section class="pb">
+<h2>٨. نتائج القياس (المقاسة فعلاً)</h2>
+<div class="box warn">هذه أرقام على <b>جهاز واحد</b> مع <b>تأخير شبكي محاكى برمجياً</b>. هي تقيس سلوك محرك النقل وليست قياساً للبلوتوث أو Wi-Fi Direct. ملف <span class="num">32 MiB</span>، والتأخير في اتجاه واحد <span class="num">25 ms</span>.</div>
+<table>
+  <tr><th>المصادر</th><th>نافذة الطلبات</th><th>زمن الاتصال والمصافحة</th><th>أول بايت</th><th>الإنتاجية</th></tr>
+  <tr><td class="num">1</td><td class="num">1</td><td class="num">104.9 ms</td><td class="num">248 ms</td><td class="num">4.4 MiB/s</td></tr>
+  <tr><td class="num">1</td><td class="num">4</td><td class="num">104.1 ms</td><td class="num">245 ms</td><td class="num">16.1 MiB/s</td></tr>
+  <tr><td class="num">1</td><td class="num">16</td><td class="num">104.2 ms</td><td class="num">259 ms</td><td class="num">46.3 MiB/s</td></tr>
+  <tr><td class="num">2</td><td class="num">1</td><td class="num">103.8 ms</td><td class="num">247 ms</td><td class="num">8.5 MiB/s</td></tr>
+  <tr><td class="num">2</td><td class="num">16</td><td class="num">103.8 ms</td><td class="num">249 ms</td><td class="num">65.7 MiB/s</td></tr>
+</table>
+<p><b>الاستنتاج:</b> إرسال عدة طلبات مسبقاً يرفع الأداء نحو <span class="num">10.5×</span> على الروابط ذات التأخير العالي، وتعدد المصادر يضاعف الإنتاجية تقريباً. وفي السيناريو الكامل كانت ذاكرة عميل التنزيل نحو <span class="num">12–14 MiB</span>.</p>
+</section>
+
+<!-- ===================== 9 ===================== -->
+<section class="pb">
+<h2>٩. ما تبقى وما هو محجوب</h2>
+<table>
+  <tr><th>العنصر</th><th>السبب</th><th>الحل المقترح</th></tr>
+  <tr><td>تطبيق أندرويد كامل</td><td>أدوات أندرويد الرسمية محجوبة في بيئة التطوير (<span class="lat">dl.google.com</span>)</td><td>نبنيه الآن بأدوات Debian البديلة. الحل الدائم: بيئة تسمح بالأدوات الرسمية أو جهاز مطور محلي.</td></tr>
+  <tr><td>ربط نواة C++ بأندرويد (JNI)</td><td>يحتاج Android NDK المحجوب أيضاً</td><td>نقل البروتوكول إلى Kotlin، أو توفير NDK.</td></tr>
+  <tr><td>البلوتوث وWi-Fi Direct</td><td>لا توجد هواتف حقيقية، ولا يمكن اختبار الراديو في السحابة</td><td>مختبر يضم 10 هواتف أو أكثر (القسم ١٤).</td></tr>
+  <tr><td>التوجيه التلقائي</td><td>يحتاج تصميماً أمنياً مع أدلة ميدانية</td><td>المرحلة ٦ من الخطة.</td></tr>
+  <tr><td>متجر التطبيقات وواجهة الناشر</td><td>يعتمد على تطبيق أندرويد</td><td>المرحلة ٤.</td></tr>
+  <tr><td>البوابات والربط العالمي</td><td>غير منفذ</td><td>المرحلة ٧.</td></tr>
+  <tr><td>بحث الأعمال السابقة (T14)</td><td>لم يُنجز بعد</td><td>قبل أي ادعاء بالابتكار.</td></tr>
+  <tr><td>ملف الترخيص (LICENSE)</td><td>قرار يعود لصاحب المشروع</td><td>اختيار ترخيص مفتوح، مثل Apache-2.0 أو GPL-3.0.</td></tr>
+</table>
+</section>
+
+<!-- ===================== 10 ===================== -->
+<section>
+<h2>١٠. خطة التنفيذ والمراحل</h2>
+<table>
+  <tr><th style="width:8%">المرحلة</th><th>المحتوى</th><th style="width:16%">المدة التقديرية*</th><th style="width:13%">الحالة</th></tr>
+  <tr><td class="num">0–3</td><td>الأساس، والشبكة الأولى، ونقل البيانات (على لينكس)</td><td>—</td><td><span class="tag ok">منجز (نموذج)</span></td></tr>
+  <tr><td class="num">4</td><td>المتجر: الناشر، والبيانات الوصفية، والبحث، وكتالوج التطبيقات والوسائط، وواجهة التنزيلات</td><td class="num">2 أشهر</td><td><span class="tag part">سطر أوامر فقط</span></td></tr>
+  <tr><td class="num">5</td><td>تطبيق أندرويد: الصلاحيات، والبلوتوث، والواي فاي، ولوحة التحكم، وحدود الموارد</td><td class="num">3–4 أشهر</td><td><span class="tag part">بدأ</span></td></tr>
+  <tr><td class="num">6</td><td>الخدمات الموزعة: WebAssembly، والويب المحلي، واستعادة الحالة، والتوجيه التلقائي</td><td class="num">2–3 أشهر</td><td><span class="tag no">مخطط</span></td></tr>
+  <tr><td class="num">7</td><td>الأمان: تخزين المفاتيح في Android Keystore، وفحص التطبيقات، ومراجعة خارجية</td><td class="num">2–3 أشهر (متوازية)</td><td><span class="tag part">الأساس منجز</span></td></tr>
+  <tr><td class="num">8</td><td>عقد لينكس وبوابات، وربط المجتمعات</td><td class="num">2 أشهر</td><td><span class="tag part">العقدة منجزة</span></td></tr>
+  <tr><td class="num">9</td><td>بحث العتاد: وحدات راديو، ولوحة نموذجية، وقياس الطاقة</td><td class="num">3+ أشهر (بحثي)</td><td><span class="tag no">مخطط</span></td></tr>
+  <tr><td class="num">10</td><td>الإصدار: البناء النهائي، والوثائق، وتجربة ميدانية عامة</td><td class="num">2 أشهر</td><td><span class="tag no">مخطط</span></td></tr>
+</table>
+<p class="small">* المدد تقديرية لفريق من <span class="num">4–5</span> أشخاص (السيناريو ٢)، والمراحل متداخلة جزئياً. هذه مراحل تطوير وليست ضماناً بالاكتمال في مدة محددة.</p>
+</section>
+
+<!-- ===================== 11 ===================== -->
+<section class="pb">
+<h2>١١. الفريق المطلوب</h2>
+<table>
+  <tr><th>الدور</th><th>المسؤوليات</th><th style="width:16%">التفرغ (س٢)</th></tr>
+  <tr><td>مهندس أندرويد / Kotlin (راديو)</td><td>التطبيق، والبلوتوث، وWi-Fi Direct/Aware، والصلاحيات، وقيود الخلفية</td><td>كامل</td></tr>
+  <tr><td>مهندس أنظمة وشبكات C++</td><td>النواة، والبروتوكول، والتوجيه، والأداء، وعقد لينكس والبوابات</td><td>كامل</td></tr>
+  <tr><td>مهندس Kotlin / واجهات</td><td>المتجر، والناشر، والوسائط، ودعم العربية والإنجليزية والاتجاهين</td><td>كامل</td></tr>
+  <tr><td>مهندس أمن</td><td>نموذج التهديدات، ومراجعة التشفير، وفحص التطبيقات، والتنسيق مع المراجعة الخارجية</td><td>نصف دوام</td></tr>
+  <tr><td>مهندس جودة واختبار</td><td>مختبر الأجهزة، والاختبار الميداني، والقياسات الحقيقية</td><td>كامل</td></tr>
+  <tr><td>مصمم واجهات وتجربة مستخدم</td><td>16 شاشة، والهوية البصرية، واختبار سهولة الاستخدام</td><td>جزئي (3–4 أشهر)</td></tr>
+  <tr><td>مدير منتج / مشروع</td><td>الأولويات، والتجربة الميدانية، والشراكات، والجوانب القانونية</td><td>جزئي، أو صاحب المشروع</td></tr>
+</table>
+</section>
+
+<!-- ===================== 12 ===================== -->
+<section class="pb">
+<h2>١٢. التكاليف (ثلاثة سيناريوهات)</h2>
+<div class="box warn"><b>تقديرات تخطيطية بالدولار الأمريكي، وليست عروض أسعار.</b> رواتب المهندسين تختلف كثيراً حسب الدولة والخبرة، لذلك تُعرض الأرقام كنطاقات مع الافتراضات. «التكلفة الشاملة» للمهندس تعني الراتب مع التكاليف المرتبطة به. أضيف هامش احتياطي <span class="num">15%</span>.</div>
+<h3>الافتراضات</h3>
+<table>
+  <tr><th>البند</th><th>الافتراض</th></tr>
+  <tr><td>تكلفة المهندس الشهرية: المنطقة العربية / عن بعد</td><td class="num">$3,000 – $6,000</td></tr>
+  <tr><td>تكلفة المهندس الشهرية: أوروبا / أمريكا</td><td class="num">$12,000 – $18,000</td></tr>
+  <tr><td>مراجعة أمنية خارجية (تشفير وبروتوكول وتطبيق)</td><td class="num">$10,000 – $120,000</td></tr>
+  <tr><td>استشارات قانونية (الخصوصية، والترخيص، وسياسة إزالة المحتوى)</td><td class="num">$2,000 – $50,000</td></tr>
+</table>
+<table>
+  <tr><th>البند</th><th>س١: مطوّر واحد</th><th>س٢: فريق صغير (عربي / عن بعد)</th><th>س٣: فريق كامل (أوروبا / أمريكا)</th></tr>
+  <tr><td>الفريق</td><td>شخص واحد مع أدوات ذكاء اصطناعي</td><td><span class="num">4–5</span> أشخاص</td><td><span class="num">7</span> أشخاص</td></tr>
+  <tr><td>الرواتب</td><td class="num">$36k – $108k<br><span class="small">(12–18 شهراً)</span></td><td class="num">$144k – $360k<br><span class="small">(12 شهراً)</span></td><td class="num">$1.01M – $1.51M<br><span class="small">(12 شهراً)</span></td></tr>
+  <tr><td>العتاد (القسم ١٤)</td><td class="num">$1.5k – $4k</td><td class="num">$5k – $10k</td><td class="num">$10k – $20k</td></tr>
+  <tr><td>المراجعة الأمنية الخارجية</td><td class="num">$10k – $25k</td><td class="num">$20k – $50k</td><td class="num">$50k – $120k</td></tr>
+  <tr><td>الاستشارات القانونية</td><td class="num">$2k – $5k</td><td class="num">$5k – $15k</td><td class="num">$20k – $50k</td></tr>
+  <tr><td>البنية السحابية (CI، وبوابات، وعقد تمهيد)</td><td class="num">$0.6k – $2.4k</td><td class="num">$2k – $6k</td><td class="num">$6k – $20k</td></tr>
+  <tr><td>هامش احتياطي <span class="num">15%</span></td><td>مضمّن</td><td>مضمّن</td><td>مضمّن</td></tr>
+  <tr><td><b>الإجمالي التقريبي</b></td><td class="num"><b>$58k – $166k</b></td><td class="num"><b>$202k – $507k</b></td><td class="num"><b>$1.26M – $1.98M</b></td></tr>
+  <tr><td><b>المدة إلى تجربة ميدانية عامة</b></td><td><b><span class="num">15–20</span> شهراً</b></td><td><b><span class="num">10–14</span> شهراً</b></td><td><b><span class="num">9–12</span> شهراً</b></td></tr>
+</table>
+<p class="small">طريقة الحساب في س٢ مثلاً: الحد الأدنى = (<span class="num">144 + 5 + 20 + 5 + 2</span>) × <span class="num">1.15</span> ≈ <span class="num">$202k</span>. والحد الأعلى = (<span class="num">360 + 10 + 50 + 15 + 6</span>) × <span class="num">1.15</span> ≈ <span class="num">$507k</span>. وفي س١ تكون الرواتب صفراً إذا كان صاحب المشروع هو المطوّر نفسه، فينخفض الإجمالي إلى نحو <span class="num">$16k – $42k</span>.</p>
+<h3>رسوم معروفة</h3>
+<ul>
+  <li>حساب مطوّر Google Play: رسم لمرة واحدة <span class="num">$25</span>.</li>
+  <li>F-Droid (متجر مفتوح المصدر): مجاني، ويتطلب أن يكون الكود مفتوحاً وقابلاً للبناء.</li>
+  <li>اسم نطاق وموقع للمشروع: تكلفة سنوية صغيرة.</li>
+</ul>
+</section>
+
+<!-- ===================== 13 ===================== -->
+<section class="pb">
+<h2>١٣. الجدول الزمني (السيناريو ٢، تقديري)</h2>
+<table class="gantt">
+  <tr><th style="width:28%">العمل</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr>
+  <tr><td>أندرويد: عميل الشبكة المحلية، والهوية، والواجهة الأساسية</td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>نقل Wi-Fi Direct واختباره على هواتف حقيقية</td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>نقل البلوتوث (BLE)، والاختيار الهجين بين الوسائط</td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>المتجر: الناشر، والتطبيقات، والوسائط، والمعاينات</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>التوجيه التلقائي، والبوابات، والفهرس المجتمعي</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>تقوية الأمان، والمراجعة الخارجية</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>تجربة ميدانية على 20–50 جهازاً، وقياسات حقيقية</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td><td class="c"></td><td class="c"></td></tr>
+  <tr><td>الإصدار، والوثائق، والنشر في المتاجر</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c f"></td><td class="c f"></td><td class="c f"></td></tr>
+</table>
+<p class="small">الأعمدة أشهر. الخلايا الملونة فترات عمل تقديرية. وأي تأخر في الحصول على الهواتف أو أدوات أندرويد يزيح الجدول كله.</p>
+
+<h2>١٤. العتاد والبنية التحتية</h2>
+<table>
+  <tr><th>العنصر</th><th>الكمية</th><th>الغرض</th><th>التقدير</th></tr>
+  <tr><td>هواتف أندرويد متنوعة (شركات مختلفة، إصدارات من 8 إلى 15، بعضها يدعم Wi-Fi Aware)</td><td class="num">10–15</td><td>اختبار الراديو والتوافق والبطارية</td><td class="num">$150 – $700 للجهاز</td></tr>
+  <tr><td>حواسيب صغيرة (مثل Raspberry Pi)</td><td class="num">3–5</td><td>عقد لينكس، وبوابات، وتخزين</td><td class="num">$80 – $150 للجهاز</td></tr>
+  <tr><td>لوحات تطوير بلوتوث (مثل nRF52)</td><td class="num">3–5</td><td>بحث طبقة الراديو</td><td class="num">$20 – $60 للوحة</td></tr>
+  <tr><td>مقياس طاقة USB</td><td class="num">2</td><td>قياس استهلاك البطارية</td><td class="num">$20 – $50</td></tr>
+  <tr><td>موجّه Wi-Fi للاختبار</td><td class="num">2</td><td>شبكة مختبر معزولة</td><td class="num">$40 – $120</td></tr>
+  <tr><td>خادم سحابي صغير</td><td class="num">1–3</td><td>CI، وبوابة تجريبية، وعقدة تمهيد</td><td class="num">$5 – $40 شهرياً</td></tr>
+</table>
+<p class="small">الأسعار تقريبية وتتغير حسب السوق والدولة. مختبر الهواتف هو أهم استثمار، لأنه المكان الوحيد الذي يمكن فيه إثبات عمل الراديو فعلاً.</p>
+</section>
+
+<!-- ===================== 15 ===================== -->
+<section class="pb">
+<h2>١٥. المخاطر وطرق التخفيف</h2>
+<table>
+  <tr><th>الخطر</th><th style="width:11%">الأثر</th><th>التخفيف</th></tr>
+  <tr><td>قيود أندرويد على العمل في الخلفية وتوفير البطارية</td><td>عالٍ</td><td>خدمة أمامية ظاهرة للمستخدم عند المشاركة فقط، دون عمليات خفية، واختبار على شركات متعددة.</td></tr>
+  <tr><td>بطء البلوتوث مقارنة بالواي فاي</td><td>عالٍ</td><td>استخدام البلوتوث للاكتشاف والرسائل الصغيرة، والواي فاي للملفات، مع عرض السرعة الحقيقية.</td></tr>
+  <tr><td>تفاوت دعم Wi-Fi Direct/Aware بين الهواتف</td><td>متوسط</td><td>طبقة تجريد تعطل التقنية غير المدعومة، ومختبر أجهزة متنوع.</td></tr>
+  <tr><td>نشر محتوى مخالف أو محمي بحقوق النشر</td><td>عالٍ</td><td>آلية بلاغات وإزالة، وقوائم حظر، واستشارة قانونية، وشروط استخدام واضحة.</td></tr>
+  <tr><td>تطبيقات خبيثة عبر المتجر</td><td>عالٍ</td><td>التحقق من توقيع APK، وعرض الصلاحيات، وموافقة المستخدم دائماً، والتوضيح بأن الفحص ليس ضماناً.</td></tr>
+  <tr><td>ثغرات أمنية في البروتوكول</td><td>عالٍ</td><td>معايير قائمة فقط، وfuzzing، وأدوات فحص، ومراجعة خارجية قبل الإطلاق.</td></tr>
+  <tr><td>ضعف الانتشار (الشبكة تحتاج مستخدمين لتكون مفيدة)</td><td>عالٍ</td><td>البدء بمجتمعات محددة، مثل مدرسة أو حي أو مخيم، تكون فيها القيمة فورية.</td></tr>
+  <tr><td>قيود Apple على iOS</td><td>متوسط</td><td>التركيز على أندرويد ولينكس، ودراسة iOS لاحقاً ضمن قواعد Apple.</td></tr>
+  <tr><td>تجاوز الميزانية أو المدة</td><td>متوسط</td><td>مراحل صغيرة قابلة للقياس (كما يعمل المشروع الآن)، وإيقاف أو تعديل بناءً على النتائج.</td></tr>
+</table>
+</section>
+
+<!-- ===================== 16 ===================== -->
+<section>
+<h2>١٦. المتطلبات اللازمة للمتابعة</h2>
+<h3>تقنياً</h3>
+<ul>
+  <li><b>الوصول إلى أدوات أندرويد الرسمية:</b> بالسماح بـ <span class="lat">dl.google.com</span> في بيئة التطوير، أو بجهاز مطور يعمل عليه Android Studio. هذا يفتح أدوات <span class="lat">AGP</span> وNDK والمكتبات الحديثة.</li>
+  <li><b>هواتف أندرويد حقيقية</b> للاختبار، حتى 2–3 أجهزة في البداية.</li>
+  <li>مستودع Git (موجود) ونظام تكامل مستمر (CI).</li>
+</ul>
+<h3>قرارات يتخذها صاحب المشروع</h3>
+<ul>
+  <li>اختيار ترخيص الكود: مفتوح المصدر أو غير ذلك.</li>
+  <li>اختيار السيناريو المالي وحجم الفريق.</li>
+  <li>تحديد المجتمع الأول للتجربة الميدانية.</li>
+  <li>سياسة المحتوى والإزالة وشروط الاستخدام.</li>
+</ul>
+<h3>إدارياً وقانونياً</h3>
+<ul>
+  <li>حساب مطوّر Google Play، أو النشر عبر F-Droid.</li>
+  <li>استشارة قانونية حول الخصوصية والمسؤولية عن المحتوى.</li>
+  <li>إدارة آمنة لمفاتيح توقيع التطبيقات، دون وضعها أبداً في المستودع.</li>
+</ul>
+
+<h2>١٧. مؤشرات النجاح</h2>
+<table>
+  <tr><th>المؤشر</th><th>الهدف للتجربة الميدانية (يُقاس فعلياً)</th></tr>
+  <tr><td>نجاح التنزيل مع التحقق من البصمة</td><td>≥ <span class="num">99%</span> من التنزيلات المكتملة سليمة</td></tr>
+  <tr><td>الاستكمال بعد الانقطاع</td><td>عدم إعادة تنزيل أي جزء صحيح (منجز في النموذج)</td></tr>
+  <tr><td>زمن اكتشاف جهاز قريب</td><td>يُقاس لكل وسيلة (LAN، وBLE، وWi-Fi Direct)</td></tr>
+  <tr><td>استهلاك البطارية</td><td>يُقاس بالساعة أثناء المشاركة وأثناء الخمول</td></tr>
+  <tr><td>الحوادث الأمنية</td><td>صفر ثغرات حرجة مفتوحة عند الإطلاق</td></tr>
+  <tr><td>رضا المستخدمين</td><td>استبيان بعد التجربة، وإكمال مهام النشر والتنزيل دون مساعدة</td></tr>
+</table>
+</section>
+
+<!-- ===================== 18 ===================== -->
+<section class="pb">
+<h2>١٨. الأعمال السابقة والتموضع</h2>
+<div class="box warn">بحث الأعمال السابقة وبراءات الاختراع (المهمة T14) <b>لم يُنجز بعد</b>. لذلك <b>لا ندّعي</b> أن المشروع أول فكرة من نوعها. المجال غني بمشاريع سابقة يجب دراستها ومقارنتها بدقة.</div>
+<table>
+  <tr><th>المشروع / المجال</th><th>الصلة</th></tr>
+  <tr><td>BitTorrent</td><td>التنزيل متعدد المصادر والتحقق بالأجزاء</td></tr>
+  <tr><td>IPFS</td><td>عنونة المحتوى ببصمته وهياكل Merkle</td></tr>
+  <tr><td>Briar</td><td>تواصل آمن بين الأقران عبر البلوتوث والواي فاي دون إنترنت</td></tr>
+  <tr><td>Bridgefy</td><td>شبكات رسائل عبر البلوتوث</td></tr>
+  <tr><td>Serval Project</td><td>شبكات هواتف شبكية (Mesh) للمناطق دون تغطية</td></tr>
+  <tr><td>Meshtastic</td><td>شبكات شبكية بعيدة المدى عبر LoRa</td></tr>
+  <tr><td>Bluetooth Mesh</td><td>معيار الشبكات الشبكية للبلوتوث</td></tr>
+  <tr><td>DTN (RFC 9171)</td><td>شبكات تتحمل التأخير والانقطاع (خزّن واحمل ومرّر)</td></tr>
+  <tr><td>الشبكات المجتمعية</td><td>تجارب شبكات يملكها ويديرها المجتمع</td></tr>
+</table>
+<h3>فرضيات التميز (تحتاج إثباتاً)</h3>
+<ul>
+  <li>دمج اكتشاف المحتوى، ومتجر التطبيقات، والنقل متعدد الوسائط، والترحيل المشفر من الطرف إلى الطرف، في تطبيق واحد بسيط وبالعربية أولاً.</li>
+  <li>نموذج مشاركة طوعي بحدود موارد صريحة يضعها المستخدم.</li>
+  <li>توزيع تطبيقات وملفات موقعة ومتحقق منها بين الأجهزة القريبة دون خادم مركزي.</li>
+</ul>
+</section>
+
+<!-- ===================== 19 ===================== -->
+<section>
+<h2>١٩. الخطوات التالية المباشرة</h2>
+<ol>
+  <li><b>إكمال هيكل تطبيق أندرويد</b> (يجري الآن): بناء APK موقّع حقيقي، وواجهة عربية وإنجليزية، وكشف قدرات الراديو، وحدود الموارد، والصلاحيات.</li>
+  <li><b>عميل الشبكة المحلية في Kotlin</b> ليتواصل التطبيق مع عقد لينكس الحالية.</li>
+  <li><b>بحث الأعمال السابقة (T14):</b> وثائق المقارنة والمراجع.</li>
+  <li><b>تجربة أولى على هاتفين حقيقيين</b> عند توفرهما: اكتشاف، ونقل، وقياس.</li>
+  <li><b>قرار صاحب المشروع</b> بشأن الترخيص والسيناريو المالي والمجتمع التجريبي.</li>
+</ol>
+<div class="box">
+<b>للبناء والتشغيل الآن (لينكس):</b><br>
+<code>cmake -S . -B build -G Ninja &amp;&amp; cmake --build build &amp;&amp; ctest --test-dir build</code><br>
+<code>build/linux-node/wavenode --data /tmp/A publish file.pdf --title "..."</code><br>
+<code>build/linux-node/wavenode --data /tmp/A serve</code><br>
+<code>build/linux-node/wavenode --data /tmp/E fetch &lt;CONTENT_ID&gt; --out out.pdf</code>
+</div>
+<p style="margin-top:10mm;text-align:center;font-family:'Noto Kufi Arabic',sans-serif;color:#0f6fae">WAVE-NET ∞ — عالم رقمي موزع تبنيه أجهزته المشاركة.<br><span class="lat" style="font-size:9pt;color:#5b6777">Build real systems. Measure everything. Never fake progress.</span></p>
+</section>
+
+</body>
+</html>
