@@ -19,5 +19,5 @@
 | T14 | Prior-art research docs (PRIOR_ART.md, REFERENCES.md, NOVELTY_HYPOTHESES.md, RESEARCH_GAPS.md) | TODO |
 | T15 | Multi-hop relay (ROUTE_PROPOSAL/COMMIT), source-routed, end-to-end TLS | DONE (manual routes) |
 | T16 | Android app stage 1: reproducible signed APK, capability detection, permissions, resource policy, AR/EN UI | DONE (built + JVM-tested; NOT run on a device) |
-| T17 | Android stage 2: WAVE LAN client in Kotlin (TLS + channel binding) + identity in Android Keystore; interop test vs Linux node | TODO |
+| T17 | Android stage 2: full WAVE-NP in Kotlin (TLS 1.3 + binding), publish/discover/search/download/serve, Keystore-wrapped identity; interop-tested vs C++ | DONE (JVM-verified; awaiting first run on real phones) |
 | T18 | Android BLE / Wi-Fi Direct `Link`s (needs real phones) | BLOCKED (no devices) |

@@ -142,3 +142,22 @@ GCC 42/42, ASan+UBSan 42/42, TSan 42/42; `ctest` 3/3; `wave5.sh` 2/2 runs.
   from devices without GPS) → declared optional; (2) Gradle `dex`/`apk` tasks lacked declared inputs and silently kept a stale
   APK → inputs declared, rebuild confirmed (new size, icon present).
 - **Not tested: running on a phone or emulator** (no device; emulator images need dl.google.com). UI behaviour is unverified.
+
+## T17 — Android stage 2: working Wi-Fi node (2026-11-21)
+`cd android && gradle :app:test :app:apk` → 24 JVM tests, 0 failures, 0 skipped (CapabilityTest 5, PolicyTest 7, StringsTest 2,
+ProtoTest 4, InteropTest 1, InteropTransferTest 5). Interop tests start the real C++ `wavenode` as a separate process:
+- Kotlin client ↔ C++ server over TLS 1.3: channel binding (TLS exporter) matches OpenSSL; search returns the signed manifest.
+- Kotlin downloads 3 MiB from C++ node, cancelled after ≥5 chunks, "app restart", resume reuses exactly the fetched chunks; bytes identical.
+- C++ `wavenode search-net`/`fetch` from the Kotlin server: public file found and downloaded byte-identical; private file neither
+  listed nor served.
+- Kotlin ↔ Kotlin (phone ↔ phone): Arabic search works; 3rd node downloads from 2 Kotlin servers (both delivered chunks).
+- Allowlist C++ node refuses the Kotlin client ("not trusted").
+- Discovery both ways: Kotlin receives C++ announces; C++ `peers` lists the Kotlin node (ID, name, port).
+- ProtoTest: RFC 8032 key derivation + signature reproduced exactly; every single-bit flip of a frame rejected.
+APK `wavenet-0.2.0-debug.apk` (3,240,437 bytes): aapt2 badging OK (versionCode 2, min 26, target 34), apksigner v2/v3 OK,
+zipalign OK; `dexdump -d` disassembles the whole DEX; exactly 7 `invoke-custom` instructions, all inside the 3 reviewed
+kotlin-stdlib classes, none reachable from app/protocol code (build guard + mutation test).
+Bugs found and fixed: (1) `MulticastSocket.apply { port }` resolved to the socket's own port (-1) → discovery could not start;
+(2) kotlin-stdlib invokedynamic would crash on ART if reached → build guard (D21).
+**Not tested:** execution on ART / a real phone (no device; Debian ships libart without dalvikvm or boot classpath),
+Keystore path, UI, real Wi-Fi multicast between phones.

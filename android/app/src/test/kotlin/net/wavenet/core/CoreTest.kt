@@ -82,7 +82,7 @@ class PolicyTest {
 }
 
 class StringsTest {
-    private fun keys(path: String) = Regex("""<string name="([a-z_]+)">""").findAll(File(path).readText()).map { it.groupValues[1] }.toSet()
+    private fun keys(path: String) = Regex("""<string name="([a-z_]+)"""").findAll(File(path).readText()).map { it.groupValues[1] }.toSet()
 
     @Test fun arabicAndEnglishHaveSameKeys() {
         val en = keys("src/main/res/values/strings.xml"); val ar = keys("src/main/res/values-ar/strings.xml")

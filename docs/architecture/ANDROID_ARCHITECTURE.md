@@ -7,7 +7,8 @@
 | Pure-Kotlin logic (capabilities, permissions per Android version, resource policy) | **Done**, 14 JVM tests |
 | UI: welcome, dashboard, nearby scan, resource limits, language (AR/EN, RTL), dark/light | Written, compiles |
 | Run on a real phone / emulator | **Not done** — no device, emulator images need dl.google.com (blocked) |
-| WAVE transfers on Android (LAN/TLS client, identity in Android Keystore) | **Not done** — next task |
+| WAVE transfers on Android over Wi-Fi: publish, discover, search, multi-source resumable download, serve (T17) | **Done in code**; protocol interop-tested against the C++ node on the JVM |
+| Identity: Ed25519 seed wrapped by an Android Keystore AES-GCM key | Done (compiles; Keystore path only runs on a device) |
 | BLE / Wi-Fi Direct *transfer* | Not done (scanning only lists devices) |
 
 ## Toolchain (why no Android Gradle Plugin)
@@ -26,7 +27,10 @@ When a modern SDK is available, switch to AGP and restore `neverForLocation`.
   `RadioKind/CapabilityDetector` (hardware abstraction: unsupported media are reported, never assumed),
   `Permissions.forDiscovery(kind, sdk)`, `ResourcePolicy/PolicyEngine` (sharing OFF by default; battery, metered data,
   daily data cap, storage cap, per-role switches).
-- `net.wavenet.app` — `MainActivity` (UI in code), `DeviceProbe` (features, radio on/off, battery, metered),
+- `net.wavenet.proto` — pure Kotlin + Bouncy Castle, byte-compatible with the C++ core: `Codec`, `Crypto/Identity`, `Frame`,
+  `Manifest`, `Tls` (BC TLS 1.3, exporter "EXPORTER-WAVE-NP-v1"), `Session`, `Wire`, `ContentStore`, `PeerClient`,
+  `Downloader`, `NodeServer` (rate limits, private/redistribution rules), `Discovery`.
+- `net.wavenet.app` — `WaveNode` (foreground-only node), `KeyVault`, `MainActivity` (UI in code), `DeviceProbe` (features, radio on/off, battery, metered),
   `NearbyScanner` (user-started 12 s BLE + Wi-Fi Direct discovery, stopped in `onPause`), `Prefs`.
 
 ## Android rules respected
