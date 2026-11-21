@@ -16,6 +16,11 @@ val gen = layout.buildDirectory.dir("wave")
 dependencies {
   compileOnly(files(androidJar))
   compileOnly(files(gen.map { it.dir("rclasses") }))
+  // Bouncy Castle (MIT-style licence): Ed25519 + TLS 1.3 with exporter on every Android version (min API 26).
+  val bc = "1.80"
+  implementation("org.bouncycastle:bcprov-jdk18on:$bc")
+  implementation("org.bouncycastle:bctls-jdk18on:$bc")
+  implementation("org.bouncycastle:bcpkix-jdk18on:$bc")
   testImplementation(kotlin("test"))
 }
 
