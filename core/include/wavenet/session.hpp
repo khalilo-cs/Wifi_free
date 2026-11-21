@@ -39,11 +39,12 @@ class Session {
  private:
   Session(std::unique_ptr<Link> l, const Identity& me, uint32_t net) : link_(std::move(l)), me_(me), net_(net) {}
   np::Frame make(np::MsgType t, ByteView payload, uint64_t req);
+  Bytes ctx(ByteView nonce) const;  // signature context = nonce || channel binding
   std::unique_ptr<Link> link_;
   const Identity& me_;
   uint32_t net_;
   PublicKey peer_{};
-  Bytes my_nonce_, peer_nonce_;
+  Bytes my_nonce_, peer_nonce_, binding_;
   uint64_t send_seq_ = 0, recv_seq_ = 0;
   std::mutex send_mu_;
 };

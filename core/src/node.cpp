@@ -81,7 +81,9 @@ void NodeServer::accept_loop() {
     conn->t = std::thread([this, raw, conn] {
       std::shared_ptr<Session> s;
       try {
-        s = std::shared_ptr<Session>(Session::respond(std::unique_ptr<Link>(raw), ctx_.id, ctx_.network_id, ctx_.trust));
+        std::unique_ptr<Link> l(raw);
+        if (ctx_.tls) l = tls_wrap(std::move(l), TlsRole::Server);
+        s = std::shared_ptr<Session>(Session::respond(std::move(l), ctx_.id, ctx_.network_id, ctx_.trust));
       } catch (...) {}
       if (s) {
         { std::lock_guard l2(mu_); conn->s = s; if (!running_) s->close(); }
@@ -138,7 +140,9 @@ void NodeServer::serve(std::shared_ptr<Session> s) {
 
 // ---------------- client ----------------
 PeerClient::PeerClient(const PeerAddr& a, NodeContext& ctx, int timeout_ms) : timeout_(timeout_ms) {
-  s_ = Session::initiate(tcp_connect(a.host, a.port, timeout_ms), ctx.id, ctx.network_id, ctx.trust);
+  auto l = tcp_connect(a.host, a.port, timeout_ms);
+  if (ctx.tls) l = tls_wrap(std::move(l), TlsRole::Client, timeout_ms);
+  s_ = Session::initiate(std::move(l), ctx.id, ctx.network_id, ctx.trust);
 }
 
 np::Frame PeerClient::call(MsgType t, ByteView payload, MsgType expect) {

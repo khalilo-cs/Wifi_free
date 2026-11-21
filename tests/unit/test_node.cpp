@@ -110,7 +110,7 @@ TEST(node_rejects_corrupt_peer) {
       auto link = l.accept(100);
       if (!link) continue;
       try {
-        auto s = Session::respond(std::move(link), evil, 1, {});
+        auto s = Session::respond(tls_wrap(std::move(link), TlsRole::Server), evil, 1, {});
         for (;;) {
           auto fr = s->recv(2000);
           if (fr.h.type == np::MsgType::MANIFEST_REQUEST) {

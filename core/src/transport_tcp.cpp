@@ -39,7 +39,8 @@ class TcpLink final : public Link {
   explicit TcpLink(int fd) : fd_(fd), name_(peer_name(fd)) {
     int one = 1; ::setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
-  ~TcpLink() override { close(); ::close(fd_); }
+  ~TcpLink() override { if (fd_ >= 0) { close(); ::close(fd_); } }
+  int release_fd() override { int f = fd_; fd_ = -1; return f; }
 
   void send_frame(ByteView f) override {
     size_t off = 0;
@@ -66,7 +67,7 @@ class TcpLink final : public Link {
 
   // Thread-safe: only shuts the socket down; the descriptor is released in the destructor so a
   // concurrent reader never sees a closed/reused fd.
-  void close() override { if (!closed_.exchange(true)) ::shutdown(fd_, SHUT_RDWR); }
+  void close() override { if (!closed_.exchange(true) && fd_ >= 0) ::shutdown(fd_, SHUT_RDWR); }
   std::string describe() const override { return name_; }
   const char* medium() const override { return "tcp"; }
 
@@ -83,7 +84,7 @@ class TcpLink final : public Link {
       got += size_t(r);
     }
   }
-  const int fd_;
+  int fd_;
   std::atomic<bool> closed_{false};
   std::string name_;
 };

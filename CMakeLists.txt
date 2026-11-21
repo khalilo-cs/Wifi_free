@@ -19,7 +19,7 @@ endif()
 file(GLOB WAVENET_CORE_SRC CONFIGURE_DEPENDS core/src/*.cpp)
 add_library(wavenet_core STATIC ${WAVENET_CORE_SRC})
 target_include_directories(wavenet_core PUBLIC core/include)
-target_link_libraries(wavenet_core PUBLIC OpenSSL::Crypto SQLite::SQLite3 Threads::Threads)
+target_link_libraries(wavenet_core PUBLIC OpenSSL::SSL OpenSSL::Crypto SQLite::SQLite3 Threads::Threads)
 
 enable_testing()
 file(GLOB WAVENET_TEST_SRC CONFIGURE_DEPENDS tests/unit/*.cpp)

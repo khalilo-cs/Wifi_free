@@ -43,8 +43,9 @@ INTENT_REQUEST, ROUTE_PROPOSAL, ROUTE_COMMIT, CHUNK_RECEIPT, STATE_CHECKPOINT, S
 GATEWAY_ADVERTISE, TRUST_REVOKE.
 
 ## Not provided in v1 (known gaps)
-- **No confidentiality:** frames are signed (authenticated) but NOT encrypted. Planned: run sessions
-  over TLS 1.3 / QUIC or a Noise-protocol handshake rather than inventing an AEAD construction.
+- Confidentiality comes from the transport, not from WAVE-NP: TCP sessions run inside TLS 1.3 (T11) and the
+  signature context includes the TLS exporter value (channel binding, see `docs/security/SESSION_SECURITY.md`).
+  UDP `NODE_ANNOUNCE` frames remain signed-only (public by design).
 - No multi-hop routing yet (hop limit carried but not used).
 
 ## Prior standards considered

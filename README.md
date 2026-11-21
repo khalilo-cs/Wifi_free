@@ -8,7 +8,7 @@ Reaching the global Internet always requires a real gateway; nothing here replac
 ## What works today (tested — see TEST_REPORT.md)
 - Ed25519 node identity (`NodeID = SHA-256(pubkey)`), key file 0600.
 - WAVE-NP v1 signed frames (experimental project protocol), fuzzed.
-- Mutually authenticated sessions, replay protection, allowlist/blocklist trust.
+- TLS 1.3 encrypted, mutually authenticated sessions (channel-bound), replay protection, allowlist/blocklist trust.
 - LAN discovery via signed UDP multicast announces (+ unicast seeds).
 - Publishing with metadata, signed manifests, SQLite catalog, local + remote search (private items never exposed).
 - Chunked, multi-source, resumable downloads; per-chunk and whole-file SHA-256 verification; corrupt peers dropped.
@@ -36,7 +36,9 @@ $W --data /tmp/nodeE fetch <CONTENT_ID> --out ./book.pdf   # Ctrl-C / rerun resu
 Ports: TCP 47801 (content), UDP 47800 multicast 239.255.77.86 (discovery). Firewalls must allow them.
 
 ## Security notes
-Traffic is **authenticated but not encrypted** in v0.1. Do not share private data over untrusted networks yet.
+Node-to-node connections use **TLS 1.3 (OpenSSL)** with channel binding: the WAVE-NP handshake signs the TLS exporter
+value, so peers are authenticated by their Ed25519 node keys and a man-in-the-middle is detected. No certificate
+authority is used. UDP discovery announcements are signed but **not encrypted** (they reveal node name, port and item count).
 See `docs/security/` and `docs/protocol/NETWORK_PROTOCOL.md`.
 
 ## Project tracking

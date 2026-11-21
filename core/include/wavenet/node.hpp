@@ -26,6 +26,7 @@ struct NodeContext {
   ContentStore& store;
   uint32_t network_id = 1;
   TrustPolicy trust;
+  bool tls = true;  // TLS 1.3 + channel binding on every peer connection (both sides must agree)
 };
 
 // Can `ctx` serve content `m` to other peers?
@@ -66,6 +67,7 @@ class PeerClient {
   Bytes chunk(const Hash256& cid, uint32_t idx);  // raw, NOT yet verified
   NodeId peer_id() const { return s_->peer_id(); }
   std::string describe() const { return s_->link().describe(); }
+  bool encrypted() const { return s_->link().encrypted(); }
  private:
   np::Frame call(np::MsgType t, ByteView payload, np::MsgType expect);
   std::unique_ptr<Session> s_;

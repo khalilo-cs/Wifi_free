@@ -82,3 +82,16 @@ Measured in one run (single host, loopback, **not radio, not a benchmark**): rep
 Not covered: B as a relay (multi-hop not implemented, T15), real radio, energy consumption, service (code) failover.
 **Test-design bug found:** the first version assumed exactly 20 chunks before stopping; with several sources a few more complete.
 Behaviour is correct (extra chunks are verified and kept); the test now checks resume == chunks actually fetched.
+
+## T11 — TLS 1.3 + channel binding (2026-11-21)
+- GCC: 33 tests, 0 failed checks; ASan+UBSan: 33/33; TSan: 33/33 twice, no warnings. `ctest`: 3/3 (unit, two-node, WAVE-5).
+- `tls_session_encrypted_and_bound`: medium `tcp+tls1.3`, 32-byte binding equal on both ends, 1 MiB frame delivered.
+- `tls_passive_eavesdropper_sees_no_plaintext`: byte-level tap between client and server. **Control without TLS: marker
+  found in captured bytes. With TLS: marker not found** (traffic was captured, non-empty).
+- `tls_active_mitm_detected_by_channel_binding`: attacker terminates TLS on both sides and relays frames → server
+  "bad HELLO: bad signature", client handshake fails.
+- **Mutation check:** with `channel_binding()` forced empty, the same test FAILS ("server: accepted | client: accepted"),
+  proving the binding is what defeats the attack. Code restored afterwards and test passes again.
+- WAVE-5 rerun: all download sources reported as `tls+tcp:…`.
+- Bugs found during T11: (1) process killed by SIGPIPE (exit 141) when a TLS peer closed → D13; (2) malicious-peer test
+  silently stopped testing chunk rejection because the fake peer spoke plain TCP → fake peer now uses TLS.
