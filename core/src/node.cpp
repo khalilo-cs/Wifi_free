@@ -42,8 +42,8 @@ bool servable(const NodeContext& ctx, const CatalogEntry& e) {
 }
 
 // ---------------- server ----------------
-NodeServer::NodeServer(NodeContext& ctx, const std::string& host, uint16_t port, size_t max_conns)
-    : ctx_(ctx), listener_(host, port), max_conns_(max_conns) {}
+NodeServer::NodeServer(NodeContext& ctx, const std::string& host, uint16_t port, ServerLimits lim)
+    : ctx_(ctx), listener_(host, port), lim_(lim), handshake_limiter_(lim.handshake_burst, lim.handshakes_per_sec) {}
 NodeServer::~NodeServer() { stop(); }
 
 void NodeServer::start() {
@@ -73,9 +73,17 @@ void NodeServer::accept_loop() {
       if ((*it)->done) { if ((*it)->t.joinable()) (*it)->t.join(); it = conns_.erase(it); } else ++it;
     }
     if (!link) continue;
-    if (active_ >= max_conns_) { link->close(); continue; }  // resource limit
+    // Cheap checks BEFORE any TLS handshake or signature work (resource-exhaustion defence).
+    const std::string ip = link->remote_ip();
+    if (!handshake_limiter_.allow(ip, np::now_ms())) { ++refused_rate_; link->close(); continue; }
+    auto pit = per_ip_.find(ip);
+    if (active_ >= lim_.max_conns || (pit != per_ip_.end() && pit->second >= lim_.max_conns_per_ip)) {
+      ++refused_cap_; link->close(); continue;
+    }
     ++active_;
+    ++per_ip_[ip];
     auto conn = std::make_shared<Conn>();
+    conn->ip = ip;
     conns_.push_back(conn);
     Link* raw = link.release();
     conn->t = std::thread([this, raw, conn] {
@@ -93,16 +101,23 @@ void NodeServer::accept_loop() {
       std::lock_guard l2(mu_);
       conn->s.reset();
       conn->done = true;
+      if (--per_ip_[conn->ip] == 0) per_ip_.erase(conn->ip);
       --active_;
     });
   }
 }
 
 void NodeServer::serve(std::shared_ptr<Session> s) {
+  RateLimiter req_limit(lim_.requests_per_sec * 2, lim_.requests_per_sec, 1);
   while (running_) {
     np::Frame f;
     try { f = s->recv(60000); } catch (...) { return; }  // idle timeout / bad frame / closed
     auto err = [&](const std::string& m) { s->send(MsgType::ERROR, as_view(m), f.h.request_id); };
+    if (!req_limit.allow("s", np::now_ms())) {
+      ++req_limited_;
+      try { err("rate limited"); } catch (...) {}
+      return;  // abusive session is closed
+    }
     try {
       switch (f.h.type) {
         case MsgType::SEARCH_REQUEST: {

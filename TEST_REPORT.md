@@ -95,3 +95,13 @@ Behaviour is correct (extra chunks are verified and kept); the test now checks r
 - WAVE-5 rerun: all download sources reported as `tls+tcp:…`.
 - Bugs found during T11: (1) process killed by SIGPIPE (exit 141) when a TLS peer closed → D13; (2) malicious-peer test
   silently stopped testing chunk rejection because the fake peer spoke plain TCP → fake peer now uses TLS.
+
+## T13 — rate limiting + threat model (2026-11-21)
+GCC 37/37, ASan+UBSan 37/37, TSan 37/37 (no warnings); `ctest` 3/3.
+- `ratelimit_token_bucket`: burst, refill (none at 0.8 tokens, one at 1.0), cap at burst, no tokens when clock goes backwards.
+- `ratelimit_bounded_keys`: 1000 keys → 16 tracked.
+- `server_refuses_connection_flood`: 30 raw connections in a burst with burst=5 → exactly 25 dropped before TLS;
+  after 1.1 s refill a legitimate authenticated peer is served.
+- `server_per_ip_connection_cap_and_request_limit`: 3rd concurrent session from same IP refused (cap 2);
+  request flood at 10/s → 15–25 served then "rate limited" and session closed; other session unaffected.
+- `docs/security/THREAT_MODEL.md`: 23 threats — mitigated+tested / partial / open, each linked to its test.

@@ -22,6 +22,8 @@ class Link {
   virtual bool encrypted() const { return false; }
   // Hands the underlying socket to a wrapper (e.g. TLS). Returns -1 if not supported. Link is unusable afterwards.
   virtual int release_fd() { return -1; }
+  // Remote network address without port (used for per-address limits); empty if unknown.
+  virtual std::string remote_ip() const { return {}; }
 };
 
 class TcpListener {

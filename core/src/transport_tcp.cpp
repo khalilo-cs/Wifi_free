@@ -41,6 +41,10 @@ class TcpLink final : public Link {
   }
   ~TcpLink() override { if (fd_ >= 0) { close(); ::close(fd_); } }
   int release_fd() override { int f = fd_; fd_ = -1; return f; }
+  std::string remote_ip() const override {
+    auto p = name_.rfind(':');
+    return p == std::string::npos || name_.size() < 5 ? std::string() : name_.substr(4, p - 4);  // "tcp:IP:PORT"
+  }
 
   void send_frame(ByteView f) override {
     size_t off = 0;

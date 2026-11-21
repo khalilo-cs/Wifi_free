@@ -15,7 +15,7 @@
 | T10 | WAVE-5 scenario script: 5 processes (publisher, relay*, cache, backup host, client) over loopback | DONE (B relay pending T15) |
 | T11 | Transport encryption: TLS 1.3 (OpenSSL) + channel binding of WAVE-NP signatures | DONE |
 | T12 | Request pipelining + measured benchmark suite (TTFB, throughput, resume time) | TODO |
-| T13 | Threat model document (THREAT_MODEL.md) + rate limiting on handshakes | TODO |
+| T13 | Threat model document (THREAT_MODEL.md) + rate limiting on handshakes | DONE |
 | T14 | Prior-art research docs (PRIOR_ART.md, REFERENCES.md, NOVELTY_HYPOTHESES.md, RESEARCH_GAPS.md) | TODO |
 | T15 | Multi-hop relay (ROUTE_PROPOSAL/COMMIT) — *relay node currently NOT implemented* | TODO |
 | T16 | Android app (Kotlin) + JNI binding of core; BLE/Wi-Fi Direct `Link`s | BLOCKED (no Android SDK in this environment) |

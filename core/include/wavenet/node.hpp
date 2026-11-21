@@ -6,6 +6,7 @@
 #include <map>
 #include <thread>
 #include "wavenet/catalog.hpp"
+#include "wavenet/ratelimit.hpp"
 #include "wavenet/session.hpp"
 #include "wavenet/store.hpp"
 
@@ -32,27 +33,41 @@ struct NodeContext {
 // Can `ctx` serve content `m` to other peers?
 bool servable(const NodeContext& ctx, const CatalogEntry& e);
 
+struct ServerLimits {
+  size_t max_conns = 32;            // total concurrent sessions
+  size_t max_conns_per_ip = 8;      // concurrent sessions from one address
+  double handshake_burst = 20;      // connection attempts allowed in a burst, per address
+  double handshakes_per_sec = 5;    // sustained connection attempts per address
+  double requests_per_sec = 500;    // per session (burst = 2x)
+};
+
 class NodeServer {
  public:
-  NodeServer(NodeContext& ctx, const std::string& bind_host, uint16_t port, size_t max_conns = 32);
+  NodeServer(NodeContext& ctx, const std::string& bind_host, uint16_t port, ServerLimits limits = {});
   ~NodeServer();
   void start();
   void stop();
   uint16_t port() const { return listener_.port(); }
   uint64_t chunks_served() const { return chunks_served_; }
+  uint64_t refused_rate() const { return refused_rate_; }      // attempts dropped by the per-address limiter
+  uint64_t refused_capacity() const { return refused_cap_; }   // attempts dropped by connection caps
+  uint64_t requests_limited() const { return req_limited_; }
 
  private:
   void accept_loop();
   void serve(std::shared_ptr<Session> s);
   NodeContext& ctx_;
   TcpListener listener_;
-  size_t max_conns_;
+  ServerLimits lim_;
+  RateLimiter handshake_limiter_;
+  std::map<std::string, size_t> per_ip_;
+  std::atomic<uint64_t> refused_rate_{0}, refused_cap_{0}, req_limited_{0};
   std::atomic<bool> running_{false};
   std::atomic<size_t> active_{0};
   std::atomic<uint64_t> chunks_served_{0};
   std::thread accept_thread_;
   std::mutex mu_;
-  struct Conn { std::shared_ptr<Session> s; std::thread t; bool done = false; };
+  struct Conn { std::shared_ptr<Session> s; std::thread t; bool done = false; std::string ip; };
   std::list<std::shared_ptr<Conn>> conns_;
 };
 

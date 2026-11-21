@@ -15,3 +15,4 @@
 | D11 | 2026-11-18 | `Link::close()` = shutdown only; fd freed in destructor | Fixes TSan-detected race; avoids fd reuse by concurrent reader. |
 | D12 | 2026-11-21 | TLS 1.3 without PKI + exporter channel binding in WAVE-NP signatures | Standard primitives only; node keys stay the single identity; MITM detected (tested). |
 | D13 | 2026-11-21 | TLS layer sets SIGPIPE to ignore if still default | OpenSSL uses write(); a closing peer killed the process (exit 141) in tests. |
+| D14 | 2026-11-21 | Per-IP token bucket checked before TLS; per-IP + total connection caps; per-session request bucket | Cheapest possible rejection point for floods; all maps bounded. Defaults: burst 20, 5/s, 8 conns/IP, 500 req/s. |
