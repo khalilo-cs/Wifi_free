@@ -44,37 +44,6 @@ interface Link {
     val encrypted: Boolean
 }
 
-private fun readExact(inp: InputStream, buf: ByteArray, off: Int, n: Int) {
-    var got = 0
-    while (got < n) {
-        val r = try { inp.read(buf, off + got, n - got) } catch (e: SocketTimeoutException) { throw TransportError("recv timeout") }
-            catch (e: Exception) { throw TransportError("recv failed: ${e.message}") }
-        if (r < 0) throw TransportError("connection closed by peer")
-        got += r
-    }
-}
-
-/** Frame reader/writer over byte streams (same size checks as the C++ links). */
-open class StreamLink(protected val sock: Socket, private val inp: InputStream, private val out: OutputStream,
-                      override val describe: String, override val channelBinding: ByteArray = ByteArray(0)) : Link {
-    override val encrypted: Boolean get() = channelBinding.isNotEmpty()
-    private val sendLock = Any()
-    override fun sendFrame(frame: ByteArray) = synchronized(sendLock) {
-        try { out.write(frame); out.flush() } catch (e: Exception) { throw TransportError("send failed: ${e.message}") }
-    }
-    override fun recvFrame(timeoutMs: Int): ByteArray {
-        sock.soTimeout = timeoutMs
-        val head = ByteArray(Frame.BASE_HEADER_LEN)
-        readExact(inp, head, 0, head.size)
-        val total = try { Frame.peekSize(head) } catch (e: DecodeError) { throw TransportError("bad frame: ${e.message}") }
-        if (total < head.size || total > Frame.MAX_FRAME) throw TransportError("bad frame size")
-        val buf = head.copyOf(total)
-        readExact(inp, buf, head.size, total - head.size)
-        return buf
-    }
-    override fun close() { try { sock.close() } catch (e: Exception) { } }
-}
-
 /**
  * TLS 1.3 only (Bouncy Castle). Certificates are ephemeral and not verified: identity is proven by the WAVE-NP handshake,
  * which signs the TLS exporter value "EXPORTER-WAVE-NP-v1" (channel binding) — identical to the C++ node (D12).
@@ -83,19 +52,20 @@ object Tls {
     const val EXPORTER_LABEL = "EXPORTER-WAVE-NP-v1"
     private val bcCrypto by lazy { BcTlsCrypto(Crypto.rng) }
 
-    fun connect(host: String, port: Int, timeoutMs: Int = 10_000): Link {
+    fun connect(host: String, port: Int, timeoutMs: Int = 10_000, medium: String = "tcp"): Link {
         val s = Socket()
         try {
             s.connect(InetSocketAddress(host, port), timeoutMs)
             s.tcpNoDelay = true
             s.soTimeout = timeoutMs
         } catch (e: Exception) { s.close(); throw TransportError("connect failed ($host:$port): ${e.message}") }
-        return clientWrap(s, "tls+tcp:$host:$port")
+        return clientWrap(ByteChannel.of(s, "tls+$medium:$host:$port"), timeoutMs)
     }
 
-    fun clientWrap(s: Socket, name: String): Link {
+    /** TLS 1.3 client over any byte channel (TCP, Bluetooth RFCOMM, pipe). */
+    fun clientWrap(ch: ByteChannel, timeoutMs: Int = 10_000): Link {
         var binding: ByteArray? = null
-        val proto = TlsClientProtocol(s.getInputStream(), s.getOutputStream())
+        val proto = TlsClientProtocol(ch.input, ch.output)
         val client = object : DefaultTlsClient(bcCrypto) {
             override fun getSupportedVersions(): Array<ProtocolVersion> = ProtocolVersion.TLSv13.only()
             override fun getAuthentication(): TlsAuthentication = object : TlsAuthentication {
@@ -107,8 +77,8 @@ object Tls {
                 binding = context.exportKeyingMaterial(EXPORTER_LABEL, null, 32)
             }
         }
-        try { proto.connect(client) } catch (e: Exception) { s.close(); throw TransportError("TLS handshake failed: ${e.message}") }
-        return StreamLink(s, proto.inputStream, proto.outputStream, name, binding ?: throw TransportError("no TLS exporter"))
+        try { ch.withTimeout(timeoutMs) { proto.connect(client) } } catch (e: Exception) { ch.close(); throw TransportError("TLS handshake failed: ${e.message}") }
+        return StreamLink(ch, proto.inputStream, proto.outputStream, ch.name, binding ?: throw TransportError("no TLS exporter"))
     }
 
     /** Ephemeral self-signed Ed25519 certificate (needed only so TLS 1.3 can run; never trusted). */
@@ -125,10 +95,12 @@ object Tls {
     }
     private val serverCred by lazy { ServerCred() }
 
-    fun serverWrap(s: Socket, name: String, timeoutMs: Int = 5_000): Link {
-        s.soTimeout = timeoutMs
+    fun serverWrap(s: Socket, name: String, timeoutMs: Int = 5_000): Link = serverWrap(ByteChannel.of(s, name), timeoutMs)
+
+    /** TLS 1.3 server over any byte channel (TCP, Bluetooth RFCOMM, pipe). */
+    fun serverWrap(ch: ByteChannel, timeoutMs: Int = 5_000): Link {
         var binding: ByteArray? = null
-        val proto = TlsServerProtocol(s.getInputStream(), s.getOutputStream())
+        val proto = TlsServerProtocol(ch.input, ch.output)
         val server = object : DefaultTlsServer(bcCrypto) {
             override fun getSupportedVersions(): Array<ProtocolVersion> = ProtocolVersion.TLSv13.only()
             override fun getCredentials(): TlsCredentials {
@@ -140,8 +112,8 @@ object Tls {
                 binding = context.exportKeyingMaterial(EXPORTER_LABEL, null, 32)
             }
         }
-        try { proto.accept(server) } catch (e: Exception) { s.close(); throw TransportError("TLS handshake failed: ${e.message}") }
-        return StreamLink(s, proto.inputStream, proto.outputStream, name, binding ?: throw TransportError("no TLS exporter"))
+        try { ch.withTimeout(timeoutMs) { proto.accept(server) } } catch (e: Exception) { ch.close(); throw TransportError("TLS handshake failed: ${e.message}") }
+        return StreamLink(ch, proto.inputStream, proto.outputStream, ch.name, binding ?: throw TransportError("no TLS exporter"))
     }
 }
 

@@ -34,7 +34,6 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
     private val active = AtomicInteger(0)
     private val perIp = HashMap<String, Int>()
     private val limiter = RateLimiter(20.0, 5.0)
-    private val sockets = java.util.Collections.synchronizedSet(HashSet<Socket>())
     val chunksServed = AtomicLong(0)
     val refused = AtomicLong(0)
 
@@ -45,27 +44,35 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
         return ctx.store.hasComplete(m.contentId)
     }
 
+    private val channels = java.util.Collections.synchronizedSet(HashSet<ByteChannel>())
+
+    /**
+     * Serves ONE connection from any medium (TCP accept loop below, Android Bluetooth RFCOMM server, tests).
+     * Blocks until the connection ends. Rate limit + caps are keyed by the remote address (IP or Bluetooth address).
+     */
+    fun serveChannel(ch: ByteChannel) {
+        val key = ch.remoteKey
+        val ok = running.get() && limiter.allow(key) && synchronized(perIp) {
+            if (active.get() >= maxConns || (perIp[key] ?: 0) >= maxPerIp) false else { perIp[key] = (perIp[key] ?: 0) + 1; active.incrementAndGet(); true }
+        }
+        if (!ok) { refused.incrementAndGet(); ch.close(); return }
+        channels.add(ch)
+        try { serveLink(Tls.serverWrap(ch)) } catch (e: Exception) { } finally {
+            ch.close(); channels.remove(ch)
+            synchronized(perIp) { val n = (perIp[key] ?: 1) - 1; if (n <= 0) perIp.remove(key) else perIp[key] = n; active.decrementAndGet() }
+        }
+    }
+
     private val acceptThread = Thread {
         while (running.get()) {
             val s = try { ss.accept() } catch (e: Exception) { break }
-            val ip = s.inetAddress.hostAddress ?: "?"
-            val ok = limiter.allow(ip) && synchronized(perIp) {
-                if (active.get() >= maxConns || (perIp[ip] ?: 0) >= maxPerIp) false else { perIp[ip] = (perIp[ip] ?: 0) + 1; active.incrementAndGet(); true }
-            }
-            if (!ok) { refused.incrementAndGet(); try { s.close() } catch (e: Exception) { }; continue }
-            sockets.add(s)
-            Thread {
-                try { serve(s) } catch (e: Exception) { } finally {
-                    try { s.close() } catch (e: Exception) { }
-                    sockets.remove(s)
-                    synchronized(perIp) { val n = (perIp[ip] ?: 1) - 1; if (n <= 0) perIp.remove(ip) else perIp[ip] = n; active.decrementAndGet() }
-                }
-            }.apply { isDaemon = true; name = "wave-conn" }.start()
+            try { s.tcpNoDelay = true } catch (e: Exception) { }
+            val ch = ByteChannel.of(s, "tls+tcp:" + s.inetAddress.hostAddress + ":" + s.port)
+            Thread { serveChannel(ch) }.apply { isDaemon = true; name = "wave-conn" }.start()
         }
     }.apply { isDaemon = true; name = "wave-accept"; start() }
 
-    private fun serve(sock: Socket) {
-        val link = Tls.serverWrap(sock, "tls+tcp:" + sock.inetAddress.hostAddress + ":" + sock.port)
+    private fun serveLink(link: Link) {
         val s = Session.respond(link, ctx.id, ctx.networkId, ctx.trust)
         val reqLimit = RateLimiter(1000.0, 500.0, 1)
         while (running.get()) {
@@ -101,7 +108,7 @@ class NodeServer(private val ctx: NodeContext, bindHost: String = "0.0.0.0", por
     override fun close() {
         running.set(false)
         try { ss.close() } catch (e: Exception) { }
-        synchronized(sockets) { for (s in sockets) try { s.close() } catch (e: Exception) { } }
+        synchronized(channels) { for (ch in channels.toList()) ch.close() }
         acceptThread.join(2000)
     }
 }
