@@ -34,7 +34,8 @@ Status legend: **M** = mitigated and tested · **P** = partial · **O** = open (
 | 16 | Discovery spoofing / replay | A2 | signed announce, ±60 s window, strictly newer timestamp | M | `discovery_validation_rules` |
 | 17 | Discovery metadata exposure (name, port, item count) | A1 | none (announces are public by design) | O | Document to users; option to disable multicast (`--no-multicast`). |
 | 18 | Traffic analysis (who talks to whom, sizes) | A1 | none | O | Out of scope for v0. |
-| 19 | Routing manipulation / poisoning | A3 | n/a — no multi-hop routing yet | O | Must be designed together with T15. |
+| 19 | Routing manipulation (relay redirects to a fake target, reads or alters relayed data) | A3 | end-to-end TLS through relays, target ID pinned, opt-in relaying, relay limits | M | `relay_fake_target_detected`, `relay_sees_no_plaintext` (+ mutation checks), `relay_refusals` |
+| 19b | Relay metadata exposure / traffic dropping | A3 | multi-source download tolerates drops | P | Relays see who→whom and volume; no onion routing. No automatic routing yet, so no route-table poisoning surface. |
 | 20 | Malicious applications (APK) | A4 | none yet: no APK scanning, signature verification or install flow | O | WAVE Store app market not implemented. Integrity ≠ safety. |
 | 21 | Malicious publisher identity theft | A5 | key file 0600, refuses group/world-readable keys and symlinks | P | Key not encrypted at rest (needs OS keystore). |
 | 22 | Spam / illegal content, takedown | A4 | local `unpublish`; blocklist | P | No reporting/takedown protocol across nodes yet. |

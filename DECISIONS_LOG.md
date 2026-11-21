@@ -17,3 +17,5 @@
 | D13 | 2026-11-21 | TLS layer sets SIGPIPE to ignore if still default | OpenSSL uses write(); a closing peer killed the process (exit 141) in tests. |
 | D14 | 2026-11-21 | Per-IP token bucket checked before TLS; per-IP + total connection caps; per-session request bucket | Cheapest possible rejection point for floods; all maps bounded. Defaults: burst 20, 5/s, 8 conns/IP, 500 req/s. |
 | D15 | 2026-11-21 | Pipelining window default 4 (CLI `--window`, max 64); parallel connect to sources | Measured: window removes RTT-bound behaviour; sequential connect inflated TTFB. 4 keeps memory low (≤ 4 × 1 MiB per source). |
+| D16 | 2026-11-21 | Relays splice raw bytes; TLS + WAVE handshake run end-to-end through them; relaying opt-in | Relays never hold keys or plaintext; reuses tested session security; directive: no forced resource sharing. |
+| D17 | 2026-11-21 | Route requests detected by peeking magic+version+type (7 bytes), not 1 byte | Mutation testing showed 1-byte detection confused plaintext sessions with relay requests. |

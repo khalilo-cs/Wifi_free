@@ -41,6 +41,20 @@ class TcpLink final : public Link {
   }
   ~TcpLink() override { if (fd_ >= 0) { close(); ::close(fd_); } }
   int release_fd() override { int f = fd_; fd_ = -1; return f; }
+  Bytes peek(size_t n, int timeout_ms) override {
+    Bytes b(n);
+    auto deadline = np::now_ms() + uint64_t(timeout_ms);
+    for (;;) {
+      if (fd_ < 0) return {};
+      ssize_t r = ::recv(fd_, b.data(), n, MSG_PEEK | MSG_DONTWAIT);
+      if (r == ssize_t(n)) return b;
+      if (r == 0) { b.clear(); return b; }  // closed
+      uint64_t now = np::now_ms();
+      if (now >= deadline) { b.resize(r > 0 ? size_t(r) : 0); return b; }
+      // wait for more data (poll returns immediately while unread data exists, so sleep briefly)
+      if (r > 0) { ::poll(nullptr, 0, 5); } else if (!wait_fd(fd_, POLLIN, int(deadline - now))) { b.clear(); return b; }
+    }
+  }
   std::string remote_ip() const override {
     auto p = name_.rfind(':');
     return p == std::string::npos || name_.size() < 5 ? std::string() : name_.substr(4, p - 4);  // "tcp:IP:PORT"

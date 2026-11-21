@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # WAVE-5 scenario (Part 15 of the directive) with 5 node processes on ONE host over loopback TCP + UDP multicast.
-#   A = publisher   B = relay (NOT IMPLEMENTED: multi-hop is task T15; B only runs as a plain peer here)
+#   A = publisher   B = relay (owner-enabled --relay; splices bytes, TLS runs end-to-end through it)
 #   C = cache (replicates from A)   D = backup host (replicates from A)   E = client
 # Proves: discovery among 5 processes, replication, multi-source download, resume, content availability after the
 # original publisher leaves, SHA-256 verification, untrusted-peer refusal, operation with no external Internet.
-# Does NOT prove: radio links, real multi-hop, energy use, service (code) failover.
+# Does NOT prove: radio links, multi-hop over physically separate radios, energy use, service (code) failover.
 set -euo pipefail
 BIN=${1:?usage: wave5.sh path/to/wavenode}
 T=$(mktemp -d)
@@ -15,10 +15,11 @@ DP=$((48000 + RANDOM % 10000))
 D="--multicast-if 127.0.0.1 --disc-port $DP"
 fail() { echo "FAIL: $*"; for f in "$T"/*.log; do echo "--- $f"; tail -20 "$f"; done; exit 1; }
 step() { echo "== $*"; }
-serve() {  # serve NAME
-  "$BIN" --data "$T/$1" serve --port 0 --name "node-$1" --announce-ms 300 $D > "$T/$1.log" 2>&1 & PID[$1]=$!
-  for i in $(seq 50); do grep -q "serving on port" "$T/$1.log" && return 0; sleep 0.1; done
-  fail "node $1 did not start"
+serve() {  # serve NAME [extra args]
+  local n=$1; shift
+  "$BIN" --data "$T/$n" serve --port 0 --name "node-$n" --announce-ms 300 "$@" $D > "$T/$n.log" 2>&1 & PID[$n]=$!
+  for i in $(seq 50); do grep -q "serving on port" "$T/$n.log" && return 0; sleep 0.1; done
+  fail "node $n did not start"
 }
 
 step "identities for A B C D E"
@@ -29,7 +30,7 @@ head -c $((16 * 1024 * 1024 + 777)) /dev/urandom > "$T/course.bin"
 CID=$("$BIN" --data "$T/a" publish "$T/course.bin" --title "Community Health Course" --category education --keywords "health first-aid")
 SHA=$(sha256sum "$T/course.bin" | cut -d' ' -f1)
 [ "$CID" = "$SHA" ] || fail "content id != sha256sum"
-serve a; serve b
+serve a; serve b --relay
 
 step "C (cache) and D (backup) replicate from the network"
 "$BIN" --data "$T/c" fetch "$CID" --discover 2 $D > "$T/c_fetch.log" 2>&1 || fail "C replicate"
@@ -43,6 +44,15 @@ for n in a b c d; do grep -q "$(cat "$T/$n.id")" "$T/e_peers.log" || fail "E did
 step "E searches the network (results from A, C, D; B holds nothing)"
 "$BIN" --data "$T/e" search-net health --discover 2 $D > "$T/e_search.log" 2>&1
 [ "$(grep -c "$CID" "$T/e_search.log")" -ge 3 ] || fail "expected >=3 sources in search results"
+
+step "R reaches A only THROUGH relay B (2 hops, end-to-end TLS)"
+sleep 1  # let B learn A from discovery
+BPORT=$(sed -n 's/.*serving on port \([0-9]*\).*/\1/p' "$T/b.log")
+"$BIN" --data "$T/r" fetch "$CID" --route "127.0.0.1:$BPORT,$(cat "$T/a.id")" --out "$T/r_out.bin" > "$T/r_fetch.log" 2>&1 || fail "fetch via relay B"
+[ "$(sha256sum "$T/r_out.bin" | cut -d' ' -f1)" = "$SHA" ] || fail "relay download hash mismatch"
+grep -q "source tls+tcp:127.0.0.1:$BPORT:" "$T/r_fetch.log" || fail "data did not flow through B"
+set +e; "$BIN" --data "$T/r2" fetch "$CID" --route "127.0.0.1:$("$BIN" --data "$T/c" id >/dev/null; sed -n 's/.*serving on port \([0-9]*\).*/\1/p' "$T/c.log"),$(cat "$T/a.id")" > "$T/r2_fetch.log" 2>&1; RC=$?; set -e
+[ $RC -ne 0 ] && grep -q "relaying disabled" "$T/r2_fetch.log" || fail "C relayed without owner consent"
 
 step "E downloads part of the file, then A (the original publisher) leaves"
 set +e; "$BIN" --data "$T/e" fetch "$CID" --discover 2 --stop-after 20 $D > "$T/e_fetch1.log" 2>&1; RC=$?; set -e
@@ -70,6 +80,8 @@ set +e; "$BIN" --data "$T/x" fetch "$CID" --peer 127.0.0.1:"$DPORT" > "$T/x_fetc
 [ $RC -ne 0 ] && grep -q "not trusted" "$T/x_fetch.log" || fail "untrusted node not refused"
 
 echo "--- measured on single-host loopback (NOT radio, NOT a benchmark):"
-for f in c_fetch d_fetch e_fetch1 e_fetch2; do echo "[$f]"; grep -E "chunks:|source |resources:" "$T/$f.log"; done
-echo "NOTE: node B ran as a plain peer only; multi-hop relaying is not implemented (TASKS.md T15)."
+for f in c_fetch d_fetch r_fetch e_fetch1 e_fetch2; do echo "[$f]"; grep -E "chunks:|source |resources:" "$T/$f.log"; done
+kill "${PID[b]}"; wait "${PID[b]}" 2>/dev/null || true; unset 'PID[b]'
+grep "stopped" "$T/b.log" | sed 's/^/[b] /'
+grep -q "relayed circuits: [1-9]" "$T/b.log" || fail "B reports no relayed circuits"
 echo "PASS wave5"

@@ -24,6 +24,8 @@ class Link {
   virtual int release_fd() { return -1; }
   // Remote network address without port (used for per-address limits); empty if unknown.
   virtual std::string remote_ip() const { return {}; }
+  // Returns up to `n` next bytes without consuming them (fewer on timeout/close; empty if unsupported).
+  virtual Bytes peek(size_t n, int timeout_ms) { (void)n; (void)timeout_ms; return {}; }
 };
 
 class TcpListener {

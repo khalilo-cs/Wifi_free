@@ -1,4 +1,5 @@
 #include "test.hpp"
+#include "tap.hpp"
 #include "wavenet/session.hpp"
 #include <netinet/in.h>
 #include <poll.h>
@@ -12,43 +13,6 @@ using np::MsgType;
 
 namespace {
 const std::string kMarker = "WAVE-SECRET-MARKER-7f3a9c";
-
-// Plain byte relay (passive eavesdropper): forwards raw TCP bytes both ways and records everything.
-struct Tap {
-  TcpListener l{"127.0.0.1", 0};
-  uint16_t target;
-  Bytes seen;
-  std::mutex mu;
-  std::thread t;
-  explicit Tap(uint16_t tgt) : target(tgt) {
-    t = std::thread([this] {
-      auto in = l.accept(3000);
-      if (!in) return;
-      auto out = tcp_connect("127.0.0.1", target, 3000);
-      int a = in->release_fd(), b = out->release_fd();
-      uint8_t buf[65536];
-      for (;;) {
-        pollfd p[2] = {{a, POLLIN, 0}, {b, POLLIN, 0}};
-        if (::poll(p, 2, 3000) <= 0) break;
-        bool done = false;
-        for (int i = 0; i < 2; ++i) {
-          if (!(p[i].revents & (POLLIN | POLLHUP))) continue;
-          ssize_t n = ::recv(p[i].fd, buf, sizeof buf, 0);
-          if (n <= 0) { done = true; break; }
-          { std::lock_guard lk(mu); seen.insert(seen.end(), buf, buf + n); }
-          ::send(i == 0 ? b : a, buf, size_t(n), MSG_NOSIGNAL);
-        }
-        if (done) break;
-      }
-      ::close(a); ::close(b);
-    });
-  }
-  ~Tap() { if (t.joinable()) t.join(); }
-  bool saw(const std::string& s) {
-    std::lock_guard lk(mu);
-    return std::search(seen.begin(), seen.end(), s.begin(), s.end()) != seen.end();
-  }
-};
 
 // Runs a server that answers one SEARCH_REQUEST echo; client sends the marker through `connect_port`.
 bool exchange_through(uint16_t server_port_unused, TcpListener& srv_l, uint16_t connect_port, bool tls) {

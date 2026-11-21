@@ -33,13 +33,29 @@ struct NodeContext {
 // Can `ctx` serve content `m` to other peers?
 bool servable(const NodeContext& ctx, const CatalogEntry& e);
 
+// Where to reach a peer. With `via`, host:port is the first relay and `via` lists the node IDs to traverse after it,
+// ending with the target. `expect` pins the identity the final session must authenticate as.
+struct PeerAddr {
+  std::string host;
+  uint16_t port = 0;
+  std::vector<NodeId> via = {};
+  std::optional<NodeId> expect = std::nullopt;
+};
+
+
 struct ServerLimits {
   size_t max_conns = 32;            // total concurrent sessions
   size_t max_conns_per_ip = 8;      // concurrent sessions from one address
   double handshake_burst = 20;      // connection attempts allowed in a burst, per address
   double handshakes_per_sec = 5;    // sustained connection attempts per address
   double requests_per_sec = 500;    // per session (burst = 2x)
+  bool relay = false;               // relay for others ONLY when the owner enables it
+  size_t max_relays = 16;           // concurrent relayed circuits
+  int relay_idle_ms = 60000;
 };
+
+// Resolves a node ID to a directly reachable address (e.g. from the discovery table).
+using PeerResolver = std::function<std::optional<PeerAddr>(const NodeId&)>;
 
 class NodeServer {
  public:
@@ -52,10 +68,17 @@ class NodeServer {
   uint64_t refused_rate() const { return refused_rate_; }      // attempts dropped by the per-address limiter
   uint64_t refused_capacity() const { return refused_cap_; }   // attempts dropped by connection caps
   uint64_t requests_limited() const { return req_limited_; }
+  uint64_t relays_established() const { return relays_ok_; }
+  uint64_t relays_refused() const { return relays_refused_; }
+  void set_resolver(PeerResolver r) { std::lock_guard lk(mu_); resolver_ = std::move(r); }
 
  private:
   void accept_loop();
   void serve(std::shared_ptr<Session> s);
+  void relay(std::unique_ptr<Link> l);
+  PeerResolver resolver_;
+  std::atomic<size_t> relays_active_{0};
+  std::atomic<uint64_t> relays_ok_{0}, relays_refused_{0};
   NodeContext& ctx_;
   TcpListener listener_;
   ServerLimits lim_;
@@ -63,6 +86,7 @@ class NodeServer {
   std::map<std::string, size_t> per_ip_;
   std::atomic<uint64_t> refused_rate_{0}, refused_cap_{0}, req_limited_{0};
   std::atomic<bool> running_{false};
+  std::atomic<bool> stopping_{false};
   std::atomic<size_t> active_{0};
   std::atomic<uint64_t> chunks_served_{0};
   std::thread accept_thread_;
@@ -71,7 +95,6 @@ class NodeServer {
   std::list<std::shared_ptr<Conn>> conns_;
 };
 
-struct PeerAddr { std::string host; uint16_t port; };
 
 // One request in flight at a time per client.
 class PeerClient {
@@ -86,11 +109,13 @@ class PeerClient {
   NodeId peer_id() const { return s_->peer_id(); }
   std::string describe() const { return s_->link().describe(); }
   bool encrypted() const { return s_->link().encrypted(); }
+  uint32_t relay_hops() const { return hops_; }
  private:
   np::Frame call(np::MsgType t, ByteView payload, np::MsgType expect);
   std::unique_ptr<Session> s_;
   int timeout_;
   uint64_t next_req_ = 1;
+  uint32_t hops_ = 0;
 };
 
 struct DownloadStats {

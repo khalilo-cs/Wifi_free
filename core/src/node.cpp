@@ -1,4 +1,5 @@
 #include "wavenet/node.hpp"
+#include "wavenet/relay.hpp"
 #include <algorithm>
 #include <chrono>
 #include <deque>
@@ -54,6 +55,7 @@ void NodeServer::start() {
 
 void NodeServer::stop() {
   if (!running_.exchange(false)) return;
+  stopping_ = true;
   if (accept_thread_.joinable()) accept_thread_.join();
   listener_.close();
   std::list<std::shared_ptr<Conn>> conns;
@@ -91,8 +93,12 @@ void NodeServer::accept_loop() {
       std::shared_ptr<Session> s;
       try {
         std::unique_ptr<Link> l(raw);
-        if (ctx_.tls) l = tls_wrap(std::move(l), TlsRole::Server);
-        s = std::shared_ptr<Session>(Session::respond(std::move(l), ctx_.id, ctx_.network_id, ctx_.trust));
+        if (is_route_request(l->peek(kRouteSniffLen, kHandshakeTimeoutMs))) {  // ROUTE_PROPOSAL => relay request
+          relay(std::move(l));  // returns when the circuit ends; no session to serve
+        } else {
+          if (ctx_.tls) l = tls_wrap(std::move(l), TlsRole::Server);
+          s = std::shared_ptr<Session>(Session::respond(std::move(l), ctx_.id, ctx_.network_id, ctx_.trust));
+        }
       } catch (...) {}
       if (s) {
         { std::lock_guard l2(mu_); conn->s = s; if (!running_) s->close(); }
@@ -106,6 +112,43 @@ void NodeServer::accept_loop() {
       --active_;
     });
   }
+}
+
+void NodeServer::relay(std::unique_ptr<Link> l) {
+  np::Frame f;
+  try { f = np::decode(l->recv_frame(kHandshakeTimeoutMs)); } catch (...) { ++relays_refused_; return; }
+  Bytes nonce;
+  NodeId target{};
+  auto refuse = [&](const std::string& why) {
+    ++relays_refused_;
+    np::Frame e; e.h.type = MsgType::ERROR; e.h.network_id = ctx_.network_id; e.h.src = ctx_.id.public_key();
+    e.h.timestamp_ms = np::now_ms(); e.payload.assign(why.begin(), why.end());
+    try { l->send_frame(np::encode(e, ctx_.id, nonce)); } catch (...) {}
+  };
+  if (f.h.type != MsgType::ROUTE_PROPOSAL || f.payload.size() != 48) return refuse("expected ROUTE_PROPOSAL");
+  std::copy(f.payload.begin(), f.payload.begin() + 32, target.begin());
+  nonce.assign(f.payload.begin() + 32, f.payload.end());
+  uint64_t now = np::now_ms();
+  if (f.h.network_id != ctx_.network_id) return refuse("network id mismatch");
+  if (f.h.timestamp_ms + 60000 < now || f.h.timestamp_ms > now + 60000) return refuse("stale route request");
+  if (!lim_.relay) return refuse("relaying disabled on this node");
+  if (!ctx_.trust.permits(f.src_id())) return refuse("not trusted");
+  if (target == ctx_.id.node_id()) return refuse("target is the relay itself");
+  PeerResolver res;
+  { std::lock_guard lk(mu_); res = resolver_; }
+  auto addr = res ? res(target) : std::nullopt;
+  if (!addr) return refuse("target unknown to relay");
+  if (relays_active_.fetch_add(1) >= lim_.max_relays) { --relays_active_; return refuse("relay busy"); }
+  struct Release { std::atomic<size_t>& a; ~Release() { --a; } } rel{relays_active_};
+  std::unique_ptr<Link> out;
+  try { out = tcp_connect(addr->host, addr->port, 5000); } catch (...) { return refuse("target unreachable"); }
+  np::Frame ok; ok.h.type = MsgType::ROUTE_COMMIT; ok.h.network_id = ctx_.network_id; ok.h.src = ctx_.id.public_key();
+  ok.h.timestamp_ms = np::now_ms(); ok.payload.assign(target.begin(), target.end());
+  try { l->send_frame(np::encode(ok, ctx_.id, nonce)); } catch (...) { return; }
+  ++relays_ok_;
+  int a = l->release_fd(), b = out->release_fd();
+  splice_fds(a, b, lim_.relay_idle_ms, stopping_);
+  ::close(a); ::close(b);
 }
 
 void NodeServer::serve(std::shared_ptr<Session> s) {
@@ -157,8 +200,12 @@ void NodeServer::serve(std::shared_ptr<Session> s) {
 // ---------------- client ----------------
 PeerClient::PeerClient(const PeerAddr& a, NodeContext& ctx, int timeout_ms) : timeout_(timeout_ms) {
   auto l = tcp_connect(a.host, a.port, timeout_ms);
-  if (ctx.tls) l = tls_wrap(std::move(l), TlsRole::Client, timeout_ms);
+  for (auto& hop : a.via) l = route_through(std::move(l), ctx.id, ctx.network_id, hop, timeout_ms);
+  if (ctx.tls) l = tls_wrap(std::move(l), TlsRole::Client, timeout_ms);  // end-to-end with the final node
   s_ = Session::initiate(std::move(l), ctx.id, ctx.network_id, ctx.trust);
+  auto want = a.expect ? a.expect : (a.via.empty() ? std::nullopt : std::optional<NodeId>(a.via.back()));
+  if (want && s_->peer_id() != *want) { s_->close(); throw SessionError("route ended at an unexpected node (possible fake target)"); }
+  hops_ = uint32_t(a.via.size());
 }
 
 np::Frame PeerClient::call(MsgType t, ByteView payload, MsgType expect) {

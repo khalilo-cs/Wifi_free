@@ -27,7 +27,7 @@ struct Args {
   }
 };
 
-static const std::set<std::string> kFlags = {"--private", "--no-redistribute", "--allow-only", "--no-multicast", "--json"};
+static const std::set<std::string> kFlags = {"--private", "--no-redistribute", "--allow-only", "--no-multicast", "--json", "--relay"};
 
 static Args parse(int argc, char** argv) {
   Args a;
@@ -67,6 +67,17 @@ static PeerAddr parse_peer(const std::string& s) {
   return {s.substr(0, c), uint16_t(std::stoi(s.substr(c + 1)))};
 }
 
+// "--route host:port,NODEID[,NODEID...]": first relay address, then node IDs to traverse; last = target.
+static PeerAddr parse_route(const std::string& s) {
+  auto parts = std::vector<std::string>{};
+  size_t start = 0;
+  for (size_t i = 0; i <= s.size(); ++i) if (i == s.size() || s[i] == ',') { parts.push_back(s.substr(start, i - start)); start = i + 1; }
+  if (parts.size() < 2) throw std::runtime_error("route must be host:port,NODEID[,NODEID...]");
+  PeerAddr p = parse_peer(parts[0]);
+  for (size_t i = 1; i < parts.size(); ++i) p.via.push_back(hash_from_hex(parts[i]));
+  return p;
+}
+
 static DiscoveryConfig disc_cfg(const Args& a) {
   DiscoveryConfig c;
   c.port = uint16_t(std::stoi(a.get("--disc-port", "47800")));
@@ -91,6 +102,7 @@ static void print_entry(const Manifest& m, const char* state = nullptr) {
 static std::vector<PeerAddr> resolve_peers(const Args& a, const Identity& id, uint32_t net) {
   std::vector<PeerAddr> ps;
   for (auto& s : a.all("--peer")) ps.push_back(parse_peer(s));
+  for (auto& s : a.all("--route")) ps.push_back(parse_route(s));
   int wait = std::stoi(a.get("--discover", ps.empty() ? "3" : "0"));
   if (wait > 0) {
     Discovery d(id, net, disc_cfg(a));
@@ -112,10 +124,10 @@ static void usage() {
       "  list                                list local catalog\n"
       "  search TEXT [--category C]          search local catalog\n"
       "  unpublish CONTENT_ID                remove own item from catalog (keeps blob)\n"
-      "  serve [--bind H --port P --name N --announce-ms MS] [discovery opts]\n"
+      "  serve [--bind H --port P --name N --announce-ms MS --relay] [discovery opts]\n"
       "  peers [--discover SECONDS]          list nodes announcing on the LAN\n"
       "  search-net TEXT [--peer H:P ...] [--discover S]\n"
-      "  fetch CONTENT_ID [--peer H:P ...] [--discover S] [--out FILE] [--stop-after N] [--window W]\n"
+      "  fetch CONTENT_ID [--peer H:P ...] [--route H:P,NODEID[,NODEID..]] [--discover S] [--out FILE] [--stop-after N] [--window W]\n"
       "  trust allow|block NODE_ID | trust mode open|allowlist\n"
       "discovery opts: --multicast-if IP  --disc-port P  --no-multicast  --seed H:P");
 }
@@ -174,10 +186,17 @@ int main(int argc, char** argv) {
     }
     if (cmd == "serve") {
       std::signal(SIGINT, on_signal); std::signal(SIGTERM, on_signal);
-      NodeServer srv(ctx, a.get("--bind", "0.0.0.0"), uint16_t(std::stoi(a.get("--port", "47801"))));
-      srv.start();
+      ServerLimits lim;
+      lim.relay = a.has("--relay");  // relaying for others is opt-in
+      NodeServer srv(ctx, a.get("--bind", "0.0.0.0"), uint16_t(std::stoi(a.get("--port", "47801"))), lim);
       Discovery disc(id, net, disc_cfg(a));
-      Announce ann; ann.tcp_port = srv.port(); ann.name = a.get("--name", "wavenode"); ann.roles = ROLE_PUBLISHER | ROLE_HOST;
+      srv.set_resolver([&disc](const NodeId& target) -> std::optional<PeerAddr> {
+        for (auto& p : disc.peers()) if (p.id == target) return PeerAddr{p.ip, p.ann.tcp_port};
+        return std::nullopt;
+      });
+      srv.start();
+      Announce ann; ann.tcp_port = srv.port(); ann.name = a.get("--name", "wavenode");
+      ann.roles = ROLE_PUBLISHER | ROLE_HOST | (lim.relay ? ROLE_RELAY : 0u);
       std::printf("node %s serving on port %u (network %u)\n", hex(id.node_id()).c_str(), srv.port(), net);
       std::fflush(stdout);
       int every = std::stoi(a.get("--announce-ms", "1000"));
@@ -191,7 +210,9 @@ int main(int argc, char** argv) {
         disc.poll(200);
       }
       srv.stop();
-      std::printf("stopped (chunks served: %llu)\n", (unsigned long long)srv.chunks_served());
+      std::printf("stopped (chunks served: %llu, relayed circuits: %llu, relay refusals: %llu)\n",
+                  (unsigned long long)srv.chunks_served(), (unsigned long long)srv.relays_established(),
+                  (unsigned long long)srv.relays_refused());
       return 0;
     }
     if (cmd == "peers") {

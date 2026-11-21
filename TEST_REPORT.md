@@ -116,3 +116,18 @@ GCC 37/37, ASan+UBSan 37/37, TSan 37/37; `ctest` 3/3.
 - **Defect found by the benchmark:** sources were connected sequentially (TTFB 347 ms with 2 sources vs 254 ms with 1, at
   25 ms) → fixed with parallel connect → 249 ms.
 - Emulated latency on loopback only; **not radio measurements.**
+
+## T15 — multi-hop relay (2026-11-21)
+GCC 42/42, ASan+UBSan 42/42, TSan 42/42; `ctest` 3/3; `wave5.sh` 2/2 runs.
+- `relay_two_and_three_hops`: E→B→A and E→C→B→A downloads complete, SHA-256 OK, session authenticated as A and encrypted.
+- `relay_refusals`: relaying disabled → "relaying disabled"; unknown target → "target unknown"; target = relay → refused.
+- `relay_fake_target_detected`: relay maps A's ID to node G → client fails "route ended at an unexpected node".
+- `relay_sees_no_plaintext`: tap between relay and A carries the whole transfer, secret text not visible.
+- **Mutation checks:** (1) TLS off → tap sees the secret (test fails as it should); (2) target-ID check removed →
+  fake-target test fails. Code restored, all pass.
+- **Bug found by mutation (1):** with TLS off, the server took every plaintext session for a relay request (both start
+  with 'W'), so downloads failed. Fixed by sniffing message type (D17); regression test
+  `relay_plaintext_mode_not_mistaken_for_route_request` added.
+- WAVE-5 now runs B as `--relay`: client R fetched 16 MiB from A only via B, hash OK; B reported
+  "chunks served: 0, relayed circuits: 1"; C (no `--relay`) refused to relay.
+- Single host only: not evidence of radio multi-hop range or performance.

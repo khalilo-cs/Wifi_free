@@ -11,7 +11,9 @@ Reaching the global Internet always requires a real gateway; nothing here replac
 - TLS 1.3 encrypted, mutually authenticated sessions (channel-bound), replay protection, allowlist/blocklist trust.
 - LAN discovery via signed UDP multicast announces (+ unicast seeds).
 - Publishing with metadata, signed manifests, SQLite catalog, local + remote search (private items never exposed).
-- Chunked, multi-source, resumable downloads; per-chunk and whole-file SHA-256 verification; corrupt peers dropped.
+- Chunked, multi-source, pipelined, resumable downloads; per-chunk and whole-file SHA-256 verification; corrupt peers dropped.
+- Opt-in relay nodes (`serve --relay`) and multi-hop routes (`fetch --route host:port,NODEID,...`), end-to-end encrypted.
+- Per-address rate limiting and connection caps; threat model in `docs/security/THREAT_MODEL.md`.
 
 ## Build & test (Ubuntu 24.04: g++ ≥ 13, cmake, ninja, libssl-dev, libsqlite3-dev)
 ```bash
