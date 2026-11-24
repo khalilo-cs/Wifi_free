@@ -1,0 +1,28 @@
+@page { size: A4; margin: 11mm 13mm 11mm 13mm; }
+* { box-sizing: border-box; }
+html,body { margin:0; padding:0; }
+body { font-family: 'Cairo', 'DejaVu Sans', sans-serif; direction: rtl; color:#1f2937; font-size: 10pt; line-height: 1.52; background:#fff; }
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+.cover { background: linear-gradient(135deg, var(--c1), var(--c2)); color:#fff; border-radius: 14px; padding: 12px 20px; margin-bottom: 8px; }
+.cover .tag { font-size: 10pt; opacity:.9; }
+.cover h1 { margin: 2px 0 0; font-size: 24pt; line-height:1.25; }
+.cover p { margin: 4px 0 0; font-size: 12.5pt; }
+h2 { color: var(--c1); font-size: 13pt; margin: 8px 0 4px; padding-bottom: 3px; border-bottom: 2px solid var(--c3); }
+h3 { font-size: 10.5pt; margin: 5px 0 2px; color:#111827; }
+p { margin: 4px 0 6px; text-align: justify; }
+ul, ol { margin: 3px 0 6px; padding-right: 20px; }
+li { margin: 1px 0; }
+.box { background: var(--c4); border-right: 4px solid var(--c1); border-radius: 8px; padding: 8px 14px; margin: 8px 0; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.card { border:1px solid #e5e7eb; border-radius: 8px; padding: 6px 12px; }
+.card h3 { margin-top: 2px; color: var(--c1); }
+table { width:100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 9pt; }
+th { background: var(--c1); color:#fff; padding: 3px 8px; text-align: right; }
+td { border-bottom: 1px solid #e5e7eb; padding: 2px 8px; vertical-align: top; }
+tr:nth-child(even) td { background:#f9fafb; }
+.ltr { direction: ltr; unicode-bidi: embed; font-family: 'DejaVu Sans', sans-serif; font-size: 9.8pt; }
+.flow { display:flex; gap:6px; align-items:stretch; margin: 6px 0 8px; }
+.flow div { flex:1; background: var(--c4); border:1px solid var(--c3); border-radius:8px; padding:6px; text-align:center; font-size:8.8pt; line-height:1.4; }
+.flow b { display:block; color: var(--c1); font-size: 9pt; }
+.footer { margin-top: 10px; font-size: 9pt; color:#6b7280; text-align:center; }
